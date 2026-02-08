@@ -130,13 +130,16 @@ import dj_database_url
 
 # Use SQLite for local dev when DATABASE_URL is not set
 if os.environ.get("DATABASE_URL"):
-    DATABASES = {
-        "default": dj_database_url.config(
-            default=os.environ.get("DATABASE_URL"),
-            conn_max_age=0,
-            ssl_require=True,
-        )
-    }
+    _db = dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=True,
+    )
+    # Ensure PostgreSQL uses SSL on Railway/cloud
+    if _db.get("ENGINE") == "django.db.backends.postgresql":
+        _opts = _db.setdefault("OPTIONS", {})
+        _opts.setdefault("sslmode", "require")
+    DATABASES = {"default": _db}
 else:
     DATABASES = {
         'default': {
