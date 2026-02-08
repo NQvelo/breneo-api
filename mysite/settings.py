@@ -19,7 +19,16 @@ ALLOWED_HOSTS = [
     "localhost",
     "breneo.onrender.com",
     "www.breneo.onrender.com",
+    "web-production-80ed8.up.railway.app",  # your Railway deployment
 ]
+# Railway: add host from env if set (for other Railway services)
+_railway_host = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+if _railway_host and _railway_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_railway_host)
+# Optional: add more hosts via comma-separated env var
+_extra_hosts = os.getenv("ALLOWED_HOSTS", "")
+if _extra_hosts:
+    ALLOWED_HOSTS.extend(h.strip() for h in _extra_hosts.split(",") if h.strip())
 
 
 
