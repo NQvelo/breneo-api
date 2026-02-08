@@ -178,7 +178,19 @@ REST_FRAMEWORK = {
 
 CSRF_TRUSTED_ORIGINS = [
     "https://breneo.onrender.com",
+    "https://www.breneo.onrender.com",
+    "https://web-production-80ed8.up.railway.app",
 ]
+# Add Railway origin from env if set
+_r = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+if _r:
+    _railway_origin = f"https://{_r}"
+    if _railway_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_railway_origin)
+# Optional: comma-separated list of origins, e.g. https://app.example.com
+_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+if _origins:
+    CSRF_TRUSTED_ORIGINS.extend(o.strip() for o in _origins.split(",") if o.strip())
 
 
 
