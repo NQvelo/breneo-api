@@ -1,0 +1,3677 @@
+[
+  {
+    "model": "app.skill",
+    "pk": 1,
+    "fields": {
+      "name": "Python"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 2,
+    "fields": {
+      "name": "Django"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 3,
+    "fields": {
+      "name": "SQL"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 4,
+    "fields": {
+      "name": "React"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 5,
+    "fields": {
+      "name": "JavaScript"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 6,
+    "fields": {
+      "name": "React.js"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 7,
+    "fields": {
+      "name": "iOS"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 8,
+    "fields": {
+      "name": "Product Designer"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 9,
+    "fields": {
+      "name": "Vue.js"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 10,
+    "fields": {
+      "name": "Node.js"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 11,
+    "fields": {
+      "name": "Android"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 12,
+    "fields": {
+      "name": "3D Modeler"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 13,
+    "fields": {
+      "name": "Angular"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 14,
+    "fields": {
+      "name": "Graphic Designer"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 15,
+    "fields": {
+      "name": "React Native"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 16,
+    "fields": {
+      "name": "UI/UX"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 17,
+    "fields": {
+      "name": "Content Creator"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 18,
+    "fields": {
+      "name": "IOS"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 19,
+    "fields": {
+      "name": "React/Frontend"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 20,
+    "fields": {
+      "name": "Communication & Teamwork"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 21,
+    "fields": {
+      "name": "Adaptability"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 22,
+    "fields": {
+      "name": "Communication"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 23,
+    "fields": {
+      "name": "Time Management"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 24,
+    "fields": {
+      "name": "Adaptability & Learning"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 25,
+    "fields": {
+      "name": "Teamwork"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 26,
+    "fields": {
+      "name": "Project Management"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 27,
+    "fields": {
+      "name": "Task Management"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 28,
+    "fields": {
+      "name": "Learning Ability"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 29,
+    "fields": {
+      "name": "Leadership"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 30,
+    "fields": {
+      "name": "Time & Task Management"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 32,
+    "fields": {
+      "name": "soft"
+    }
+  },
+  {
+    "model": "app.skill",
+    "pk": 33,
+    "fields": {
+      "name": "python"
+    }
+  },
+  {
+    "model": "app.careercategory",
+    "pk": 1,
+    "fields": {
+      "code": "A",
+      "title": "Role & Industry Preferences"
+    }
+  },
+  {
+    "model": "app.careercategory",
+    "pk": 2,
+    "fields": {
+      "code": "B",
+      "title": "Work Environment Preferences"
+    }
+  },
+  {
+    "model": "app.careercategory",
+    "pk": 3,
+    "fields": {
+      "code": "C",
+      "title": "Career Goals & Growth Plans"
+    }
+  },
+  {
+    "model": "app.careercategory",
+    "pk": 4,
+    "fields": {
+      "code": "D",
+      "title": "Learning Style & Motivation"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 1,
+    "fields": {
+      "category": 1,
+      "text": "Which type of work excites you the most?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 2,
+    "fields": {
+      "category": 1,
+      "text": "Which industry interests you most?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 3,
+    "fields": {
+      "category": 1,
+      "text": "If you enjoy problem-solving and coding, which role fits you best?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 4,
+    "fields": {
+      "category": 1,
+      "text": "You prefer a job where you:"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 5,
+    "fields": {
+      "category": 1,
+      "text": "For long-term career growth, which path aligns with you?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 6,
+    "fields": {
+      "category": 2,
+      "text": "Which workspace do you prefer?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 7,
+    "fields": {
+      "category": 2,
+      "text": "Do you prefer working:"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 8,
+    "fields": {
+      "category": 2,
+      "text": "How do you feel about remote work?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 9,
+    "fields": {
+      "category": 2,
+      "text": "Which schedule suits you best?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 10,
+    "fields": {
+      "category": 2,
+      "text": "How important is collaboration?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 11,
+    "fields": {
+      "category": 3,
+      "text": "What motivates you most?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 12,
+    "fields": {
+      "category": 3,
+      "text": "What is your long-term goal?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 13,
+    "fields": {
+      "category": 3,
+      "text": "You want your growth based on:"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 14,
+    "fields": {
+      "category": 3,
+      "text": "How do you approach learning?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 15,
+    "fields": {
+      "category": 3,
+      "text": "You want a role that allows you to:"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 16,
+    "fields": {
+      "category": 4,
+      "text": "How do you learn best?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 17,
+    "fields": {
+      "category": 4,
+      "text": "When learning a new skill, what helps most?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 18,
+    "fields": {
+      "category": 4,
+      "text": "How do you stay motivated when tasks are difficult?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 19,
+    "fields": {
+      "category": 4,
+      "text": "Which learning approach fits you best?"
+    }
+  },
+  {
+    "model": "app.careerquestion",
+    "pk": 20,
+    "fields": {
+      "category": 4,
+      "text": "You prefer feedback to:"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 1,
+    "fields": {
+      "question": 1,
+      "text": "Designing user interfaces",
+      "RoleMapping": "UI/UX Designer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 2,
+    "fields": {
+      "question": 1,
+      "text": "Writing backend code",
+      "RoleMapping": "Backend Developer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 3,
+    "fields": {
+      "question": 1,
+      "text": "Creating 3D models",
+      "RoleMapping": "3D/Animation Artist"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 4,
+    "fields": {
+      "question": 1,
+      "text": "Managing social media",
+      "RoleMapping": "Social Media Manager"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 5,
+    "fields": {
+      "question": 2,
+      "text": "Technology & software",
+      "RoleMapping": "Software Developer / Tech Specialist"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 6,
+    "fields": {
+      "question": 2,
+      "text": "Agriculture",
+      "RoleMapping": "AgriTech / Environmental Specialist"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 7,
+    "fields": {
+      "question": 2,
+      "text": "Retail",
+      "RoleMapping": "E-commerce / Retail Manager"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 8,
+    "fields": {
+      "question": 2,
+      "text": "Manufacturing",
+      "RoleMapping": "Industrial Engineer / Operations"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 9,
+    "fields": {
+      "question": 3,
+      "text": "Data Analyst",
+      "RoleMapping": "Data Analyst"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 10,
+    "fields": {
+      "question": 3,
+      "text": "Backend Developer",
+      "RoleMapping": "Backend Developer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 11,
+    "fields": {
+      "question": 3,
+      "text": "Graphic Designer",
+      "RoleMapping": "Graphic Designer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 12,
+    "fields": {
+      "question": 3,
+      "text": "Product Manager",
+      "RoleMapping": "Product Manager"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 13,
+    "fields": {
+      "question": 4,
+      "text": "Create visual content",
+      "RoleMapping": "Content Creator / Designer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 14,
+    "fields": {
+      "question": 4,
+      "text": "Build and maintain applications",
+      "RoleMapping": "Software Engineer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 15,
+    "fields": {
+      "question": 4,
+      "text": "Only manage tasks",
+      "RoleMapping": "Project Manager"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 16,
+    "fields": {
+      "question": 4,
+      "text": "Work with customers",
+      "RoleMapping": "Customer Success / Sales"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 17,
+    "fields": {
+      "question": 5,
+      "text": "Continuous upskilling in programming languages",
+      "RoleMapping": "Software Engineer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 18,
+    "fields": {
+      "question": 5,
+      "text": "Only attending meetings",
+      "RoleMapping": "Managerial Role (non-technical)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 19,
+    "fields": {
+      "question": 5,
+      "text": "Copying others\u2019 work",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 20,
+    "fields": {
+      "question": 5,
+      "text": "Avoiding new projects",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 21,
+    "fields": {
+      "question": 6,
+      "text": "Quiet individual workspace",
+      "RoleMapping": "Developer / Researcher"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 22,
+    "fields": {
+      "question": 6,
+      "text": "Loud, busy environment",
+      "RoleMapping": "Marketing / Event Manager"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 23,
+    "fields": {
+      "question": 6,
+      "text": "Outdoors only",
+      "RoleMapping": "Field Specialist / Architect"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 24,
+    "fields": {
+      "question": 6,
+      "text": "No preference",
+      "RoleMapping": "Flexible Worker"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 25,
+    "fields": {
+      "question": 7,
+      "text": "Alone",
+      "RoleMapping": "Independent Freelancer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 26,
+    "fields": {
+      "question": 7,
+      "text": "In a team",
+      "RoleMapping": "Collaborative Developer / Designer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 27,
+    "fields": {
+      "question": 7,
+      "text": "Randomly alone or team",
+      "RoleMapping": "Hybrid Worker"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 28,
+    "fields": {
+      "question": 7,
+      "text": "Only with manager",
+      "RoleMapping": "Assistant / Support Role"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 29,
+    "fields": {
+      "question": 8,
+      "text": "Prefer fully remote",
+      "RoleMapping": "Remote Developer / Digital Nomad"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 30,
+    "fields": {
+      "question": 8,
+      "text": "Only office",
+      "RoleMapping": "On-site Specialist"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 31,
+    "fields": {
+      "question": 8,
+      "text": "Never remote",
+      "RoleMapping": "Operations / Physical Worker"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 32,
+    "fields": {
+      "question": 8,
+      "text": "Flexible, but not productive",
+      "RoleMapping": "Hybrid Role"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 33,
+    "fields": {
+      "question": 9,
+      "text": "Fixed 9\u20135",
+      "RoleMapping": "Corporate Role"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 34,
+    "fields": {
+      "question": 9,
+      "text": "Flexible hours",
+      "RoleMapping": "Freelancer / Remote Developer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 35,
+    "fields": {
+      "question": 9,
+      "text": "Night-only",
+      "RoleMapping": "Cybersecurity / IT Ops"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 36,
+    "fields": {
+      "question": 9,
+      "text": "No preference",
+      "RoleMapping": "Flexible Generalist"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 37,
+    "fields": {
+      "question": 10,
+      "text": "Very important",
+      "RoleMapping": "Team-Oriented Roles (PM, UX, Agile Dev)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 38,
+    "fields": {
+      "question": 10,
+      "text": "Not important",
+      "RoleMapping": "Independent Developer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 39,
+    "fields": {
+      "question": 10,
+      "text": "Neutral",
+      "RoleMapping": "Balanced Worker"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 40,
+    "fields": {
+      "question": 10,
+      "text": "Prefer to work without anyone",
+      "RoleMapping": "Independent Artist / Writer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 41,
+    "fields": {
+      "question": 11,
+      "text": "Learning new skills",
+      "RoleMapping": "Continuous Learner / Tech Role"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 42,
+    "fields": {
+      "question": 11,
+      "text": "Only salary",
+      "RoleMapping": "Corporate Ladder Climber"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 43,
+    "fields": {
+      "question": 11,
+      "text": "Avoiding responsibility",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 44,
+    "fields": {
+      "question": 11,
+      "text": "Free time",
+      "RoleMapping": "Lifestyle-Driven Freelancer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 45,
+    "fields": {
+      "question": 12,
+      "text": "Expert in a specialized role",
+      "RoleMapping": "Specialist (Dev, Designer, Analyst)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 46,
+    "fields": {
+      "question": 12,
+      "text": "Avoid leadership",
+      "RoleMapping": "Individual Contributor (Designer, Engineer)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 47,
+    "fields": {
+      "question": 12,
+      "text": "Switch jobs frequently",
+      "RoleMapping": "Freelancer / Consultant"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 48,
+    "fields": {
+      "question": 12,
+      "text": "Only basic tasks",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 49,
+    "fields": {
+      "question": 13,
+      "text": "Promotions & responsibility",
+      "RoleMapping": "Managerial Growth Role"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 50,
+    "fields": {
+      "question": 13,
+      "text": "Staying same level",
+      "RoleMapping": "Stable Specialist"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 51,
+    "fields": {
+      "question": 13,
+      "text": "Avoiding challenges",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 52,
+    "fields": {
+      "question": 13,
+      "text": "Random opportunities",
+      "RoleMapping": "Freelancer / Explorer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 53,
+    "fields": {
+      "question": 14,
+      "text": "Take structured courses",
+      "RoleMapping": "Programmer / Analyst"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 54,
+    "fields": {
+      "question": 14,
+      "text": "Only read articles",
+      "RoleMapping": "Casual Learner"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 55,
+    "fields": {
+      "question": 14,
+      "text": "Ignore learning",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 56,
+    "fields": {
+      "question": 14,
+      "text": "Ask others",
+      "RoleMapping": "Dependent Role"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 57,
+    "fields": {
+      "question": 15,
+      "text": "Solve complex problems",
+      "RoleMapping": "Engineer / Data Scientist"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 58,
+    "fields": {
+      "question": 15,
+      "text": "Perform repetitive tasks",
+      "RoleMapping": "Routine Worker"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 59,
+    "fields": {
+      "question": 15,
+      "text": "Avoid learning",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 60,
+    "fields": {
+      "question": 15,
+      "text": "Work without accountability",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 61,
+    "fields": {
+      "question": 16,
+      "text": "Hands-on practice",
+      "RoleMapping": "Developer / Engineer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 62,
+    "fields": {
+      "question": 16,
+      "text": "Watching videos only",
+      "RoleMapping": "Visual Learner (Designer, Marketer)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 63,
+    "fields": {
+      "question": 16,
+      "text": "Reading theory only",
+      "RoleMapping": "Researcher / Analyst"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 64,
+    "fields": {
+      "question": 16,
+      "text": "Copying others",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 65,
+    "fields": {
+      "question": 17,
+      "text": "Immediate application",
+      "RoleMapping": "Practical Developer / Designer"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 66,
+    "fields": {
+      "question": 17,
+      "text": "Long theory sessions",
+      "RoleMapping": "Academic / Researcher"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 67,
+    "fields": {
+      "question": 17,
+      "text": "Avoiding practice",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 68,
+    "fields": {
+      "question": 17,
+      "text": "Observing only",
+      "RoleMapping": "Passive Learner"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 69,
+    "fields": {
+      "question": 18,
+      "text": "Break tasks into steps",
+      "RoleMapping": "Problem Solver (Engineer, PM)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 70,
+    "fields": {
+      "question": 18,
+      "text": "Ignore them",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 71,
+    "fields": {
+      "question": 18,
+      "text": "Complain",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 72,
+    "fields": {
+      "question": 18,
+      "text": "Delay work",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 73,
+    "fields": {
+      "question": 19,
+      "text": "Step-by-step guidance",
+      "RoleMapping": "Structured Learner (Developer, Analyst)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 74,
+    "fields": {
+      "question": 19,
+      "text": "Random trial-and-error",
+      "RoleMapping": "Creative Role (Designer, Innovator)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 75,
+    "fields": {
+      "question": 19,
+      "text": "Only observing",
+      "RoleMapping": "Visual Learner"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 76,
+    "fields": {
+      "question": 19,
+      "text": "Skipping difficult parts",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 77,
+    "fields": {
+      "question": 20,
+      "text": "Improve & correct mistakes",
+      "RoleMapping": "Growth-Oriented Role (Dev, Designer)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 78,
+    "fields": {
+      "question": 20,
+      "text": "Ignore",
+      "RoleMapping": "Low fit"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 79,
+    "fields": {
+      "question": 20,
+      "text": "Compare with others",
+      "RoleMapping": "Competitive Role (Sales, Sports)"
+    }
+  },
+  {
+    "model": "app.careeroption",
+    "pk": 80,
+    "fields": {
+      "question": 20,
+      "text": "Only praise",
+      "RoleMapping": "Creative Role / Performer"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "10000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "React_Q1",
+      "skill": "React.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which of these is used to create a React component?",
+      "option1": "function",
+      "option2": "className",
+      "option3": "render()",
+      "option4": "import",
+      "correct_option": 1,
+      "isactive": false,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-02T12:52:57.803Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "10000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "React_Q2",
+      "skill": "React.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "easy",
+      "questiontext": "How do you pass data from parent to child in React?",
+      "option1": "State",
+      "option2": "Props",
+      "option3": "Context",
+      "option4": "Reducer",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-02T12:53:26.698Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "10000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "React_Q3",
+      "skill": "React.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "medium",
+      "questiontext": "Which hook is used to perform side effects like API calls in functional components?",
+      "option1": "useState",
+      "option2": "useEffect",
+      "option3": "useContext",
+      "option4": "useReducer",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-02T12:53:31.800Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "10000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "React_Q4",
+      "skill": "React.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "medium",
+      "questiontext": "What is the purpose of a key in React lists?",
+      "option1": "Identify unique DOM elements",
+      "option2": "Define styles",
+      "option3": "Store state",
+      "option4": "Create events",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-02T12:53:36.724Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "10000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "React_Q5",
+      "skill": "React.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "hard",
+      "questiontext": "What happens if you call setState inside a render method?",
+      "option1": "Updates state normally",
+      "option2": "Causes an infinite loop",
+      "option3": "Throws syntax error",
+      "option4": "Skips update",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-02T12:53:41.635Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "20000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "Vue_Q1",
+      "skill": "Vue.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which directive is used to display content conditionally in Vue?",
+      "option1": "v-if",
+      "option2": "v-for",
+      "option3": "v-bind",
+      "option4": "v-show",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:10:51.240Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "20000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "Vue_Q2",
+      "skill": "Vue.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which directive is used for looping through an array?",
+      "option1": "v-if",
+      "option2": "v-for",
+      "option3": "v-bind",
+      "option4": "v-on",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:10:59.329Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "20000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "Vue_Q3",
+      "skill": "Vue.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "medium",
+      "questiontext": "How do you pass data from parent to child component?",
+      "option1": "Props",
+      "option2": "State",
+      "option3": "Computed",
+      "option4": "Watch",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:11:07.526Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "20000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "Vue_Q4",
+      "skill": "Vue.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "medium",
+      "questiontext": "What does `v-model` do in Vue?",
+      "option1": "Two-way data binding",
+      "option2": "Event handling",
+      "option3": "Conditional rendering",
+      "option4": "Routing",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:11:17.156Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "20000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "Vue_Q5",
+      "skill": "Vue.js",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "hard",
+      "questiontext": "How do you emit a custom event from a child to parent?",
+      "option1": "this.$emit('eventName')",
+      "option2": "v-bind:event",
+      "option3": "props.emit",
+      "option4": "emitEvent()",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:11:25.787Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "30000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "Angular_Q1",
+      "skill": "Angular",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which decorator defines a component in Angular?",
+      "option1": "@Injectable",
+      "option2": "@NgModule",
+      "option3": "@Component",
+      "option4": "@Directive",
+      "correct_option": 3,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:11:33.634Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "30000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "Angular_Q2",
+      "skill": "Angular",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which directive is used to conditionally render content?",
+      "option1": "*ngFor",
+      "option2": "*ngIf",
+      "option3": "*ngShow",
+      "option4": "*ngBind",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:11:43.195Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "30000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "Angular_Q3",
+      "skill": "Angular",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "medium",
+      "questiontext": "How do you bind a click event in Angular template?",
+      "option1": "(click)=\"functionName()\"",
+      "option2": "onClick=\"functionName()\"",
+      "option3": "#click=\"functionName()\"",
+      "option4": "bindClick=\"functionName()\"",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:11:49.388Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "30000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "Angular_Q4",
+      "skill": "Angular",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "medium",
+      "questiontext": "What is the Angular service used for?",
+      "option1": "Manage HTTP requests, share data",
+      "option2": "Define UI components",
+      "option3": "Compile templates",
+      "option4": "Styling",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:12:55.887Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "30000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "Angular_Q5",
+      "skill": "Angular",
+      "RoleMapping": "Frontend Developer",
+      "difficulty": "hard",
+      "questiontext": "Which Angular feature allows lazy loading of modules?",
+      "option1": "NgModule",
+      "option2": "RouterModule with loadChildren",
+      "option3": "ComponentFactory",
+      "option4": "TemplateRef",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:13:04.772Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "40000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "Node_Q1",
+      "skill": "Node.js",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which module in Node.js is used to handle file operations?",
+      "option1": "fs",
+      "option2": "http",
+      "option3": "path",
+      "option4": "express",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:13:11.556Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "40000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "Node_Q2",
+      "skill": "Node.js",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which method starts an HTTP server in Node.js?",
+      "option1": "server.listen()",
+      "option2": "http.createServer()",
+      "option3": "app.get()",
+      "option4": "router.handle()",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:13:20.543Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "40000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "Node_Q3",
+      "skill": "Node.js",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "medium",
+      "questiontext": "Which package is most commonly used for routing in Node.js?",
+      "option1": "express",
+      "option2": "fs",
+      "option3": "path",
+      "option4": "axios",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:13:26.278Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "40000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "Node_Q4",
+      "skill": "Node.js",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "medium",
+      "questiontext": "What does `npm init` do?",
+      "option1": "Installs packages",
+      "option2": "Initializes a new Node.js project",
+      "option3": "Runs server",
+      "option4": "Updates Node.js",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:13:41.437Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "40000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "Node_Q5",
+      "skill": "Node.js",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "hard",
+      "questiontext": "In Node.js, what is the purpose of event loop?",
+      "option1": "Handles asynchronous operations",
+      "option2": "Manages CSS",
+      "option3": "Creates React components",
+      "option4": "Parses HTML",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:13:48.703Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "50000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "Python_Q1",
+      "skill": "Python",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which keyword is used to define a function in Python?",
+      "option1": "func",
+      "option2": "def",
+      "option3": "function",
+      "option4": "define",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:13:56.165Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "50000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "Python_Q2",
+      "skill": "Python",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "easy",
+      "questiontext": "Which library is used for data analysis in Python?",
+      "option1": "Pandas",
+      "option2": "React",
+      "option3": "Express",
+      "option4": "TensorFlow",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:14:05.012Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "50000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "Python_Q3",
+      "skill": "Python",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "medium",
+      "questiontext": "In Django, which command creates a new app?",
+      "option1": "python manage.py startapp",
+      "option2": "django-admin startproject",
+      "option3": "python startapp",
+      "option4": "django-create app",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:14:11.948Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "50000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "Python_Q4",
+      "skill": "Python",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "medium",
+      "questiontext": "Which data type stores key-value pairs in Python?",
+      "option1": "List",
+      "option2": "Dictionary",
+      "option3": "Set",
+      "option4": "Tuple",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:14:18.760Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "50000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "Python_Q5",
+      "skill": "Python",
+      "RoleMapping": "Backend Developer",
+      "difficulty": "hard",
+      "questiontext": "What is a Python decorator used for?",
+      "option1": "Styling code",
+      "option2": "Modifying functions/classes behavior",
+      "option3": "Storing data",
+      "option4": "Handling exceptions",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:14:36.145Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "60000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "iOS_Q1",
+      "skill": "iOS",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "easy",
+      "questiontext": "Which language is primarily used for iOS development?",
+      "option1": "Swift",
+      "option2": "Kotlin",
+      "option3": "JavaScript",
+      "option4": "Java",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:22:42.136Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "60000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "iOS_Q2",
+      "skill": "IOS",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "easy",
+      "questiontext": "Which framework is used for building UI in iOS?",
+      "option1": "UIKit",
+      "option2": "Flutter",
+      "option3": "React Native",
+      "option4": "Angular",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:18:29.387Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "60000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "iOS_Q3",
+      "skill": "iOS",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "medium",
+      "questiontext": "Which design pattern is most used in iOS development?",
+      "option1": "MVC",
+      "option2": "MVVM",
+      "option3": "MVP",
+      "option4": "Singleton",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:23:43.912Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "60000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "iOS_Q4",
+      "skill": "iOS",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "medium",
+      "questiontext": "What is the purpose of Auto Layout in iOS?",
+      "option1": "Handle animations",
+      "option2": "Manage screen layouts responsively",
+      "option3": "Data storage",
+      "option4": "API calls",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:23:21.081Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "60000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "iOS_Q5",
+      "skill": "iOS",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "hard",
+      "questiontext": "Which method handles background tasks in iOS apps?",
+      "option1": "viewDidLoad",
+      "option2": "applicationDidEnterBackground",
+      "option3": "viewWillAppear",
+      "option4": "sceneDidBecomeActive",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:19:20.486Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "70000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "Android_Q1",
+      "skill": "Android",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "easy",
+      "questiontext": "Which language is primarily used for Android development?",
+      "option1": "Kotlin",
+      "option2": "Swift",
+      "option3": "JavaScript",
+      "option4": "Python",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:19:32.876Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "70000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "Android_Q2",
+      "skill": "Android",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "easy",
+      "questiontext": "Which layout is commonly used for flexible UI?",
+      "option1": "LinearLayout",
+      "option2": "ConstraintLayout",
+      "option3": "RelativeLayout",
+      "option4": "StackLayout",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:19:44.038Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "70000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "Android_Q3",
+      "skill": "Android",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "medium",
+      "questiontext": "Which lifecycle method is called when an activity becomes visible?",
+      "option1": "onCreate",
+      "option2": "onStart",
+      "option3": "onPause",
+      "option4": "onStop",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:19:55.098Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "70000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "Android_Q4",
+      "skill": "Android",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "medium",
+      "questiontext": "Which file defines app permissions in Android?",
+      "option1": "main.xml",
+      "option2": "AndroidManifest.xml",
+      "option3": "build.gradle",
+      "option4": "strings.xml",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:20:07.592Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "70000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "Android_Q5",
+      "skill": "Android",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "hard",
+      "questiontext": "Which architecture pattern is recommended for modern Android apps?",
+      "option1": "MVC",
+      "option2": "MVVM",
+      "option3": "MVP",
+      "option4": "Singleton",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:20:15.794Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "80000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "ReactNative_Q1",
+      "skill": "React Native",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "easy",
+      "questiontext": "Which language is used in React Native development?",
+      "option1": "Java",
+      "option2": "JavaScript",
+      "option3": "Swift",
+      "option4": "Kotlin",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:20:27.059Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "80000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "ReactNative_Q2",
+      "skill": "React Native",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "easy",
+      "questiontext": "Which component is used for scrolling lists in React Native?",
+      "option1": "ScrollView",
+      "option2": "FlatList",
+      "option3": "SectionList",
+      "option4": "View",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:20:39.439Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "80000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "ReactNative_Q3",
+      "skill": "React Native",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "medium",
+      "questiontext": "How do you style a component in React Native?",
+      "option1": "CSS file",
+      "option2": "Inline JS object",
+      "option3": "HTML style",
+      "option4": "SCSS",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:20:49.224Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "80000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "ReactNative_Q4",
+      "skill": "React Native",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "medium",
+      "questiontext": "Which method updates the state in functional components?",
+      "option1": "this.setState()",
+      "option2": "setState()",
+      "option3": "useState()",
+      "option4": "updateState()",
+      "correct_option": 3,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:22:08.629Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "80000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "ReactNative_Q5",
+      "skill": "React Native",
+      "RoleMapping": "Mobile App Developer",
+      "difficulty": "hard",
+      "questiontext": "Which library is commonly used for navigation in React Native?",
+      "option1": "React Navigation",
+      "option2": "React Router",
+      "option3": "Angular Router",
+      "option4": "Vue Router",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:21:10.158Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "90000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "UIUX_Q1",
+      "skill": "UI/UX",
+      "RoleMapping": "Designer",
+      "difficulty": "easy",
+      "questiontext": "Which tool is mainly used for UI/UX design?",
+      "option1": "Figma",
+      "option2": "VS Code",
+      "option3": "Node.js",
+      "option4": "Excel",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:29:09.033Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "90000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "UIUX_Q2",
+      "skill": "UI/UX",
+      "RoleMapping": "Designer",
+      "difficulty": "easy",
+      "questiontext": "What is a wireframe?",
+      "option1": "A color palette",
+      "option2": "A low-fidelity layout",
+      "option3": "A prototype with animations",
+      "option4": "A style guide",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:29:29.923Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "90000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "UIUX_Q3",
+      "skill": "UI/UX",
+      "RoleMapping": "Designer",
+      "difficulty": "medium",
+      "questiontext": "What principle focuses on making interfaces intuitive?",
+      "option1": "Usability",
+      "option2": "Scalability",
+      "option3": "Optimization",
+      "option4": "Refactoring",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:29:36.339Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "90000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "UIUX_Q4",
+      "skill": "UI/UX",
+      "RoleMapping": "Designer",
+      "difficulty": "medium",
+      "questiontext": "What is the difference between UX and UI?",
+      "option1": "UX = interaction design, UI = visual design",
+      "option2": "UX = visual, UI = backend",
+      "option3": "UX = coding, UI = styling",
+      "option4": "UX = testing, UI = deployment",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:29:48.174Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "90000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "UIUX_Q5",
+      "skill": "UI/UX",
+      "RoleMapping": "Designer",
+      "difficulty": "hard",
+      "questiontext": "Which tool is commonly used for user flow diagrams?",
+      "option1": "Figma",
+      "option2": "Miro",
+      "option3": "Photoshop",
+      "option4": "Illustrator",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:29:59.415Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "91000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "Product_Q1",
+      "skill": "Product Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "easy",
+      "questiontext": "Which software is commonly used for product design prototypes?",
+      "option1": "Figma",
+      "option2": "VS Code",
+      "option3": "Blender",
+      "option4": "Photoshop",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:30:45.440Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "91000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "Product_Q2",
+      "skill": "Product Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "easy",
+      "questiontext": "What is the primary goal of a product designer?",
+      "option1": "Write backend code",
+      "option2": "Solve user problems through design",
+      "option3": "Manage finances",
+      "option4": "Perform SEO",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:30:40.068Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "91000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "Product_Q3",
+      "skill": "Product Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "medium",
+      "questiontext": "What is the main difference between a wireframe and a prototype?",
+      "option1": "Wireframe is interactive, prototype is static",
+      "option2": "Wireframe is static, prototype is interactive",
+      "option3": "Wireframe is colorful, prototype is black & white",
+      "option4": "Wireframe is marketing, prototype is coding",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:31:06.180Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "91000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "Product_Q4",
+      "skill": "Product Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "medium",
+      "questiontext": "Which method helps test usability with real users?",
+      "option1": "A/B testing",
+      "option2": "Usability testing",
+      "option3": "Unit testing",
+      "option4": "Stress testing",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:31:20.433Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "91000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "Product_Q5",
+      "skill": "Product Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "hard",
+      "questiontext": "Which design principle focuses on consistency across screens?",
+      "option1": "Typography",
+      "option2": "Visual hierarchy",
+      "option3": "Design system",
+      "option4": "Color contrast",
+      "correct_option": 3,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:31:30.347Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "92000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "Graphic_Q1",
+      "skill": "Graphic Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "easy",
+      "questiontext": "Which tool is widely used for graphic design?",
+      "option1": "Photoshop",
+      "option2": "VS Code",
+      "option3": "Figma",
+      "option4": "Blender",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:31:48.479Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "92000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "Graphic_Q2",
+      "skill": "Graphic Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "easy",
+      "questiontext": "What is a vector image?",
+      "option1": "Made of pixels",
+      "option2": "Made of paths and points",
+      "option3": "Only black and white",
+      "option4": "Only 3D",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:31:58.508Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "92000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "Graphic_Q3",
+      "skill": "Graphic Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "medium",
+      "questiontext": "What is the purpose of layers in graphic design?",
+      "option1": "Store fonts",
+      "option2": "Separate elements for editing",
+      "option3": "Export images",
+      "option4": "Add effects automatically",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:32:29.021Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "92000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "Graphic_Q4",
+      "skill": "Graphic Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "medium",
+      "questiontext": "Which color mode is used for printing?",
+      "option1": "RGB",
+      "option2": "CMYK",
+      "option3": "HEX",
+      "option4": "HSL",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:32:45.508Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "92000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "Graphic_Q5",
+      "skill": "Graphic Designer",
+      "RoleMapping": "Designer",
+      "difficulty": "hard",
+      "questiontext": "What is kerning in typography?",
+      "option1": "Line spacing",
+      "option2": "Space between characters",
+      "option3": "Font size",
+      "option4": "Font weight",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:32:54.642Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "93000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "3D_Q1",
+      "skill": "3D Modeler",
+      "RoleMapping": "3D Artist",
+      "difficulty": "easy",
+      "questiontext": "Which software is commonly used for 3D modeling?",
+      "option1": "Blender",
+      "option2": "Photoshop",
+      "option3": "Figma",
+      "option4": "Illustrator",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:35:14.811Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "93000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "3D_Q2",
+      "skill": "3D Modeler",
+      "RoleMapping": "3D Artist",
+      "difficulty": "easy",
+      "questiontext": "What is a mesh in 3D modeling?",
+      "option1": "A texture",
+      "option2": "A set of vertices, edges, and faces",
+      "option3": "A color palette",
+      "option4": "A shader",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:35:21.363Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "93000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "3D_Q3",
+      "skill": "3D Modeler",
+      "RoleMapping": "3D Artist",
+      "difficulty": "medium",
+      "questiontext": "What is UV mapping used for?",
+      "option1": "Assign textures to 3D models",
+      "option2": "Animate characters",
+      "option3": "Export models",
+      "option4": "Add lighting",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:35:27.916Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "93000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "3D_Q4",
+      "skill": "3D Modeler",
+      "RoleMapping": "3D Artist",
+      "difficulty": "medium",
+      "questiontext": "Which render engine is commonly used in Blender?",
+      "option1": "Cycles",
+      "option2": "Photoshop",
+      "option3": "Illustrator",
+      "option4": "Figma",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:35:34.593Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "93000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "3D_Q5",
+      "skill": "3D Modeler",
+      "RoleMapping": "3D Artist",
+      "difficulty": "hard",
+      "questiontext": "What is rigging in 3D animation?",
+      "option1": "Adding textures",
+      "option2": "Setting up a skeleton for animation",
+      "option3": "Creating shaders",
+      "option4": "Exporting models",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:35:44.403Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "94000000-0000-0000-0000-000000000001",
+    "fields": {
+      "questionid": "DigitalArt_Q1",
+      "skill": "Content Creator",
+      "RoleMapping": "Digital Artist",
+      "difficulty": "easy",
+      "questiontext": "Which tool is widely used for digital painting?",
+      "option1": "Photoshop",
+      "option2": "VS Code",
+      "option3": "Blender",
+      "option4": "Figma",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:35:59.147Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "94000000-0000-0000-0000-000000000002",
+    "fields": {
+      "questionid": "DigitalArt_Q2",
+      "skill": "Content Creator",
+      "RoleMapping": "Digital Artist",
+      "difficulty": "easy",
+      "questiontext": "What is the main purpose of layers in digital art?",
+      "option1": "Store brushes",
+      "option2": "Separate elements for editing",
+      "option3": "Export images",
+      "option4": "Color correction",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:36:06.011Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "94000000-0000-0000-0000-000000000003",
+    "fields": {
+      "questionid": "DigitalArt_Q3",
+      "skill": "Content Creator",
+      "RoleMapping": "Digital Artist",
+      "difficulty": "medium",
+      "questiontext": "Which file format preserves transparency?",
+      "option1": "JPEG",
+      "option2": "PNG",
+      "option3": "BMP",
+      "option4": "TIFF",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:36:12.178Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "94000000-0000-0000-0000-000000000004",
+    "fields": {
+      "questionid": "DigitalArt_Q4",
+      "skill": "Content Creator",
+      "RoleMapping": "Digital Artist",
+      "difficulty": "medium",
+      "questiontext": "What is concept art primarily used for?",
+      "option1": "Marketing",
+      "option2": "Visualizing ideas for projects",
+      "option3": "Coding",
+      "option4": "Exporting 3D models",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:36:20.448Z"
+    }
+  },
+  {
+    "model": "app.dynamictechquestion",
+    "pk": "94000000-0000-0000-0000-000000000005",
+    "fields": {
+      "questionid": "DigitalArt_Q5",
+      "skill": "Content Creator",
+      "RoleMapping": "Digital Artist",
+      "difficulty": "hard",
+      "questiontext": "Which technique is used to blend colors digitally?",
+      "option1": "Layer masks",
+      "option2": "Smudge tool",
+      "option3": "Lasso tool",
+      "option4": "Gradient",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-08-28T00:00:00Z",
+      "updatedat": "2025-09-01T09:36:29.050Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "0d101010-dddd-4d0d-d101-101010101010",
+    "fields": {
+      "questionid": "SS10",
+      "skill": "Adaptability & Learning",
+      "RoleMapping": "Proactive Learner",
+      "difficulty": "hard",
+      "questiontext": "How should you approach learning a completely new skill for a project?",
+      "option1": "Wait for someone else to teach",
+      "option2": "Break it into smaller parts and practice",
+      "option3": "Skip learning",
+      "option4": "Only read theory",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "1a111111-aaaa-4a1a-b111-111111111111",
+    "fields": {
+      "questionid": "SS1",
+      "skill": "Communication",
+      "RoleMapping": "Team Player",
+      "difficulty": "easy",
+      "questiontext": "What is the most important part of active listening?",
+      "option1": "Thinking about your answer while they talk",
+      "option2": "Fully concentrating on what the speaker says",
+      "option3": "Ignoring unimportant parts",
+      "option4": "Taking a long pause",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "1d111111-dddd-4d1d-d111-111111111111",
+    "fields": {
+      "questionid": "SS11",
+      "skill": "Time Management",
+      "RoleMapping": "Organized Worker",
+      "difficulty": "easy",
+      "questiontext": "Which is a basic method to prioritize tasks?",
+      "option1": "Random order",
+      "option2": "Importance and urgency",
+      "option3": "First come, first served",
+      "option4": "Longest task first",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:10:00Z",
+      "updatedat": "2025-09-09T12:10:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "2b222222-bbbb-4b2b-b222-222222222222",
+    "fields": {
+      "questionid": "SS2",
+      "skill": "Communication",
+      "RoleMapping": "Team Player",
+      "difficulty": "easy",
+      "questiontext": "Which of these is a good way to give feedback?",
+      "option1": "Be vague",
+      "option2": "Focus on personal attacks",
+      "option3": "Be constructive and specific",
+      "option4": "Only point out mistakes",
+      "correct_option": 3,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "2d222222-dddd-4d2d-d222-222222222222",
+    "fields": {
+      "questionid": "SS12",
+      "skill": "Task Management",
+      "RoleMapping": "Efficient Planner",
+      "difficulty": "easy",
+      "questiontext": "What is a to-do list mainly used for?",
+      "option1": "Tracking tasks",
+      "option2": "Sending emails",
+      "option3": "Designing UI",
+      "option4": "Recording meetings",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-09-09T12:10:00Z",
+      "updatedat": "2025-09-09T12:10:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "3c333333-cccc-4c3c-c333-333333333333",
+    "fields": {
+      "questionid": "SS3",
+      "skill": "Teamwork",
+      "RoleMapping": "Team Player",
+      "difficulty": "medium",
+      "questiontext": "If a team member disagrees with you, what is the best approach?",
+      "option1": "Ignore them",
+      "option2": "Listen and discuss respectfully",
+      "option3": "Insist on your opinion",
+      "option4": "Complain to the manager",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "3d333333-dddd-4d3d-d333-333333333333",
+    "fields": {
+      "questionid": "SS13",
+      "skill": "Time Management",
+      "RoleMapping": "Focused Worker",
+      "difficulty": "medium",
+      "questiontext": "Which technique helps focus on important tasks?",
+      "option1": "Pomodoro technique",
+      "option2": "Multitasking constantly",
+      "option3": "Checking social media",
+      "option4": "Ignoring deadlines",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-09-09T12:10:00Z",
+      "updatedat": "2025-09-09T12:10:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "4d444444-dddd-4d4d-d444-444444444444",
+    "fields": {
+      "questionid": "SS4",
+      "skill": "Teamwork",
+      "RoleMapping": "Team Player",
+      "difficulty": "medium",
+      "questiontext": "Which is an example of effective collaboration?",
+      "option1": "Each member works separately",
+      "option2": "Sharing ideas and combining efforts",
+      "option3": "Avoiding team meetings",
+      "option4": "Competing with teammates",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "5d555555-dddd-4d5d-d555-555555555555",
+    "fields": {
+      "questionid": "SS15",
+      "skill": "Time & Task Management",
+      "RoleMapping": "Project Manager",
+      "difficulty": "hard",
+      "questiontext": "How can you manage multiple projects efficiently?",
+      "option1": "Track progress, set milestones, and delegate",
+      "option2": "Focus on only one project",
+      "option3": "Avoid documentation",
+      "option4": "Do all tasks yourself",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-09-09T12:10:00Z",
+      "updatedat": "2025-09-09T12:10:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "5e555555-eeee-4e5e-e555-555555555555",
+    "fields": {
+      "questionid": "SS5",
+      "skill": "Communication & Teamwork",
+      "RoleMapping": "Team Player",
+      "difficulty": "hard",
+      "questiontext": "What strategy improves cross-functional team communication?",
+      "option1": "Regular check-ins and clear documentation",
+      "option2": "Only use email",
+      "option3": "Assign all tasks to one person",
+      "option4": "Avoid discussing problems",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "6f666666-ffff-4f6f-f666-666666666661",
+    "fields": {
+      "questionid": "SS16",
+      "skill": "Leadership",
+      "RoleMapping": "Leader / Manager",
+      "difficulty": "easy",
+      "questiontext": "A good leader should primarily:",
+      "option1": "Command without explanation",
+      "option2": "Support and guide the team",
+      "option3": "Focus only on their tasks",
+      "option4": "Avoid responsibility",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "6f666666-ffff-4f6f-f666-666666666662",
+    "fields": {
+      "questionid": "SS17",
+      "skill": "Project Management",
+      "RoleMapping": "Project Manager",
+      "difficulty": "easy",
+      "questiontext": "Which tool is commonly used for managing projects?",
+      "option1": "Photoshop",
+      "option2": "Trello",
+      "option3": "Slack",
+      "option4": "VS Code",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "6f666666-ffff-4f6f-f666-666666666663",
+    "fields": {
+      "questionid": "SS18",
+      "skill": "Project Management",
+      "RoleMapping": "Project Manager",
+      "difficulty": "medium",
+      "questiontext": "What is the main purpose of a project roadmap?",
+      "option1": "Track team birthdays",
+      "option2": "Outline goals, deadlines, and milestones",
+      "option3": "Store documents",
+      "option4": "Send emails",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "6f666666-ffff-4f6f-f666-666666666664",
+    "fields": {
+      "questionid": "SS19",
+      "skill": "Leadership",
+      "RoleMapping": "Leader / Manager",
+      "difficulty": "medium",
+      "questiontext": "Which action helps resolve project conflicts effectively?",
+      "option1": "Ignore issues",
+      "option2": "Discuss openly and find compromises",
+      "option3": "Assign blame",
+      "option4": "Delay decisions",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "6f666666-ffff-4f6f-f666-666666666665",
+    "fields": {
+      "questionid": "SS20",
+      "skill": "Project Management",
+      "RoleMapping": "Scrum Master",
+      "difficulty": "hard",
+      "questiontext": "What is a key responsibility of a Scrum Master?",
+      "option1": "Writing code",
+      "option2": "Facilitating Agile ceremonies and removing blockers",
+      "option3": "Designing UI",
+      "option4": "Managing finances",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "6f666666-ffff-4f6f-f666-666666666666",
+    "fields": {
+      "questionid": "SS6",
+      "skill": "Adaptability",
+      "RoleMapping": "Flexible Learner",
+      "difficulty": "easy",
+      "questiontext": "What is adaptability in the workplace?",
+      "option1": "Sticking only to one method",
+      "option2": "Adjusting to new situations",
+      "option3": "Ignoring changes",
+      "option4": "Following outdated rules",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "7a777777-aaaa-4a7a-a777-777777777777",
+    "fields": {
+      "questionid": "SS7",
+      "skill": "Learning Ability",
+      "RoleMapping": "Curious Learner",
+      "difficulty": "easy",
+      "questiontext": "How can you show a willingness to learn?",
+      "option1": "Ask questions and seek feedback",
+      "option2": "Refuse training",
+      "option3": "Ignore new tasks",
+      "option4": "Only do familiar tasks",
+      "correct_option": 1,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "8b888888-bbbb-4b8b-b888-888888888888",
+    "fields": {
+      "questionid": "SS8",
+      "skill": "Adaptability",
+      "RoleMapping": "Problem Solver",
+      "difficulty": "medium",
+      "questiontext": "Which attitude helps when a project changes suddenly?",
+      "option1": "Frustration",
+      "option2": "Flexibility and problem-solving",
+      "option3": "Complaining",
+      "option4": "Avoiding responsibility",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.dynamicsoftskillsquestion",
+    "pk": "9c999999-cccc-4c9c-c999-999999999999",
+    "fields": {
+      "questionid": "SS9",
+      "skill": "Learning Ability",
+      "RoleMapping": "Growth Mindset",
+      "difficulty": "medium",
+      "questiontext": "What is a growth mindset?",
+      "option1": "Believing talents are fixed",
+      "option2": "Believing skills can improve with effort",
+      "option3": "Ignoring feedback",
+      "option4": "Avoiding new challenges",
+      "correct_option": 2,
+      "isactive": true,
+      "createdat": "2025-09-09T12:00:00Z",
+      "updatedat": "2025-09-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "1",
+    "fields": {
+      "title": "Backend Developer",
+      "description": "test job",
+      "salary_min": 1000,
+      "salary_max": 2000,
+      "time_to_ready": "3 months",
+      "required_skills": [
+        1,
+        2,
+        33
+      ]
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "12",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "1270",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "1279",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "13",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "1fDk_wsW0qPXW7nIAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "1wviz_i_l-0mLBoYAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "23",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "2332",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "2aefb579-686d-4dcb-8e04-d9990341042b",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "2niME9WO7EpRjkyeAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "3",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": [
+        4,
+        5
+      ]
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "3434343",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "3738dd16-b387-4daa-bed7-312b2be39418",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "3nrNW3xcFrAQ5EORAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "4266",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "4CB9rMnCw42wuThvAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "4gdDavV3TJXZ1464AAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "5000",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "521272b5-9e4e-4ba0-a0b9-e6e5b067c7ac",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "5699965004",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "5700899004",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "5711913004",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "5732415004",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "5754209004",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "5781632004",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7031461",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7104344",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7144534",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7343534",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7481945",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7521170",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7530793",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7531251",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7532427",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7556971",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "7M7h2VdjFWFBmY22AAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "89c966c0-1975-42a1-850d-10fe20e02b05",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "9gh47W0x85iLIsKlAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "9qzLZASoijWCfZpUAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "asghZveumzsc8EeQAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "c305efc8-30ce-4944-9cd8-87fcb98474f3",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "CFpg4RaTzDxUn_CuAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "DPHCCFILz5wNkXFLAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "e4sColHHRK60F4GlAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "EMNp1A5dQB_X47pYAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "FGZnZQnOpFVuVS-pAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "fnGkvozWmIaxoDmJAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "hdjQRkZNb5lvMAHeAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "hpXwvZjGyphTnzSKAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "iivuoJbFjflMPJOlAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "ijiWjHFcIJj4lY50AAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "jhb,jhbjgvjv",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "_KW857qDZ1emPxU_AAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "KWQ8A5WYySDCY2EfAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "ltTvu6Q6S-s5WyzOAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "Me6fws8gqPjlepEBAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "MLN9XwUOguTh4DbEAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "mrPpeuTz87wTIea8AAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "oDw3PSasXy_D_UKgAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "pmtNuwVFy3_EIswuAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "pN92x59WvX_O9k5dAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "PQZ5V0IF98dsFMGNAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "PvOBkO-WKIsBS1dyAAAAAA",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "PvOBkO-WKIsBS1dyAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "RlpnsyJzO2zshDGxAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "sLrBeQk8oVRiMbg_AAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "U8BP3TZn8Ow__z_kAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "UeCHZYVmh6naX3XZAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "uFThqMuM814gCOnlAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "undefined",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "UnN8AHYKGcVOEUBGAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "UxSP9j6un4V1g4yiAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "VmydfprRze4nf9WaAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "w4VLplHKskAzioJ9AAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "xum5FOSGnsDCiKvlAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "yOc3UP8ECdhDvwmkAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  },
+  {
+    "model": "app.job",
+    "pk": "-zBKmFbPlBE5y2TJAAAAAA==",
+    "fields": {
+      "title": "Unknown Job",
+      "description": "",
+      "salary_min": 0,
+      "salary_max": 0,
+      "time_to_ready": "",
+      "required_skills": []
+    }
+  }
+]

@@ -1,0 +1,418 @@
+[
+{
+  "model": "app.userprofile",
+  "pk": 21,
+  "fields": {
+    "user": 50,
+    "phone_number": "+441234565",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 24,
+  "fields": {
+    "user": 53,
+    "phone_number": "595756175",
+    "profile_image": "",
+    "about_me": ""
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 28,
+  "fields": {
+    "user": 57,
+    "phone_number": "55464424",
+    "profile_image": "profile_pics/Banner_reactnative4.jpg",
+    "about_me": ""
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 29,
+  "fields": {
+    "user": 58,
+    "phone_number": "5445445",
+    "profile_image": "profile_pics/04HxmoUyeXbMQDOtu.webp",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 30,
+  "fields": {
+    "user": 60,
+    "phone_number": "55464424",
+    "profile_image": "profile_pics/04HxmoUyeXbMQDOtu_ZOwziu3.webp",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 31,
+  "fields": {
+    "user": 61,
+    "phone_number": "434334",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 32,
+  "fields": {
+    "user": 62,
+    "phone_number": "r34r54334",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 33,
+  "fields": {
+    "user": 63,
+    "phone_number": null,
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 34,
+  "fields": {
+    "user": 64,
+    "phone_number": "55464424",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 35,
+  "fields": {
+    "user": 65,
+    "phone_number": "55464424",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 36,
+  "fields": {
+    "user": 66,
+    "phone_number": "55464424",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 37,
+  "fields": {
+    "user": 68,
+    "phone_number": "55464424",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 38,
+  "fields": {
+    "user": 69,
+    "phone_number": "434534543",
+    "profile_image": "profile_pics/04HxmoUyeXbMQDOtu.webp",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 39,
+  "fields": {
+    "user": 70,
+    "phone_number": "55464424",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 59,
+  "fields": {
+    "user": 105,
+    "phone_number": "599123456",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 95,
+  "fields": {
+    "user": 154,
+    "phone_number": "+442112",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 98,
+  "fields": {
+    "user": 157,
+    "phone_number": "+995591552",
+    "profile_image": "media/profile_pics/IMG_3711_bxyusf",
+    "about_me": "Hey"
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 99,
+  "fields": {
+    "user": 158,
+    "phone_number": "+995551002206",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 101,
+  "fields": {
+    "user": 160,
+    "phone_number": "+995551002206",
+    "profile_image": "profile_pics/IMG_9476_nY65v8Y.JPG",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 102,
+  "fields": {
+    "user": 161,
+    "phone_number": "+995121212",
+    "profile_image": "media/profile_pics/IMG_9488_kbg3xg",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 104,
+  "fields": {
+    "user": 163,
+    "phone_number": "+99512121212",
+    "profile_image": "media/profile_pics/favicon_2_gabypy",
+    "about_me": "nm n mcn cm cn cn cxm nx mcx"
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 107,
+  "fields": {
+    "user": 165,
+    "phone_number": "+995591023441",
+    "profile_image": "media/profile_pics/Screenshot_2024-06-27_at_17.35.46_woqpvg",
+    "about_me": "bjubuhihoihipjojpojojo"
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 109,
+  "fields": {
+    "user": 168,
+    "phone_number": "344343534",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 110,
+  "fields": {
+    "user": 169,
+    "phone_number": null,
+    "profile_image": "",
+    "about_me": ""
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 111,
+  "fields": {
+    "user": 170,
+    "phone_number": null,
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 113,
+  "fields": {
+    "user": 172,
+    "phone_number": null,
+    "profile_image": "media/profile_pics/3dicons-chart-dynamic-color_jnjft9",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 114,
+  "fields": {
+    "user": 173,
+    "phone_number": "+995592244270",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 115,
+  "fields": {
+    "user": 174,
+    "phone_number": "+995599168268",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 116,
+  "fields": {
+    "user": 175,
+    "phone_number": "+995555160160",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 117,
+  "fields": {
+    "user": 176,
+    "phone_number": "+995555470784",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 118,
+  "fields": {
+    "user": 177,
+    "phone_number": "+995555041600",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 119,
+  "fields": {
+    "user": 178,
+    "phone_number": "+995599067396",
+    "profile_image": "",
+    "about_me": null
+  }
+},
+{
+  "model": "app.academy",
+  "pk": 13,
+  "fields": {
+    "user": null,
+    "name": "smart academy",
+    "email": "smart@academy.ge",
+    "phone_number": "+9953892389283",
+    "password": "qvelidze",
+    "description": "fnrjnf",
+    "website": "https://chjdn.com",
+    "created_at": "2025-10-19T08:14:12.081Z",
+    "is_verified": false,
+    "profile_image": ""
+  }
+},
+{
+  "model": "app.academy",
+  "pk": 14,
+  "fields": {
+    "user": null,
+    "name": "academy",
+    "email": "academy@gmail.com",
+    "phone_number": "22138183",
+    "password": "qvelidze",
+    "description": "hcdbhcbdhcb",
+    "website": "https://jsns.com",
+    "created_at": "2025-10-19T08:16:44.381Z",
+    "is_verified": false,
+    "profile_image": ""
+  }
+},
+{
+  "model": "app.academy",
+  "pk": 15,
+  "fields": {
+    "user": null,
+    "name": "academy",
+    "email": "academy123@gmail.com",
+    "phone_number": "43874837",
+    "password": "qvelidze",
+    "description": "cfucdcd",
+    "website": "https://cdjn.com",
+    "created_at": "2025-10-19T08:17:46.980Z",
+    "is_verified": false,
+    "profile_image": ""
+  }
+},
+{
+  "model": "app.academy",
+  "pk": 30,
+  "fields": {
+    "user": 169,
+    "name": "breneo",
+    "email": "backbreneo1@gmail.com",
+    "phone_number": "555191919",
+    "password": "pbkdf2_sha256$1000000$97TFUn86AX3WYMBWXemyJi$5o7I3hObxf4GQopju0gKO0Mq+NoMnTRFqii4cnLR8uM=",
+    "description": "dweoenenoa",
+    "website": "https://breneo.onrender.com",
+    "created_at": "2025-10-30T19:32:40.983Z",
+    "is_verified": true,
+    "profile_image": ""
+  }
+},
+{
+  "model": "app.academy",
+  "pk": 32,
+  "fields": {
+    "user": 170,
+    "name": "breneo",
+    "email": "backbreneo@gmail.com",
+    "phone_number": "344354",
+    "password": "pbkdf2_sha256$1000000$oCMfclyELVKYweBaoDvVd2$8B6RttG9teBgH4L8mdba6zmT5CHJDfWcM/Ef2YigTiU=",
+    "description": "4432543",
+    "website": null,
+    "created_at": "2025-11-01T11:13:30.385Z",
+    "is_verified": true,
+    "profile_image": ""
+  }
+},
+{
+  "model": "app.academy",
+  "pk": 33,
+  "fields": {
+    "user": 172,
+    "name": "Beta Academy",
+    "email": "beta.edu.ge@gmail.com",
+    "phone_number": "+99512121212",
+    "password": "pbkdf2_sha256$1000000$e65rR0fubFXy8aFzknh9ki$qkd46q+QZ8blj6D3p56vRTXG1qeRr7tiKQdoYRIOrZA=",
+    "description": "qwertyhnhbhbhbhb\\bh\n\ncdc\ndcdc\nd\ncd\ncd\nc\nd",
+    "website": "https://beta.edu.ge",
+    "created_at": "2025-11-01T17:18:00.744Z",
+    "is_verified": true,
+    "profile_image": "media/academy_pics/503714095_122104215938895500_1003929063914795266_n_sxpo3i"
+  }
+}
+]
