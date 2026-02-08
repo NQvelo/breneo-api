@@ -7,7 +7,19 @@ from .models import (
     CareerQuestion,
     CareerOption,
     DynamicSoftSkillsQuestion,
-    SkillTestResult,TemporaryAcademy,SocialLinks,Academy,UserProfile,TemporaryUser,Course,SavedCourse, SavedJob
+    SkillTestResult,
+    TemporaryAcademy,
+    SocialLinks,
+    Academy,
+    UserProfile,
+    TemporaryUser,
+    Course,
+    SavedCourse,
+    SavedJob,
+    Education,
+    WorkExperience,
+    Skill,
+    UserSkill,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
@@ -493,7 +505,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["id", "phone_number", "profile_image", "profile_image_url", "about_me"]
+        fields = [
+            "id",
+            "phone_number",
+            "country_region",
+            "city",
+            "profile_image",
+            "profile_image_url",
+            "about_me",
+        ]
 
     def get_profile_image_url(self, obj):
         if obj.profile_image:
@@ -508,11 +528,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.phone_number = validated_data.get("phone_number", instance.phone_number)
+        instance.country_region = validated_data.get("country_region", instance.country_region)
+        instance.city = validated_data.get("city", instance.city)
         instance.about_me = validated_data.get("about_me", instance.about_me)
-
         if "profile_image" in validated_data:
             instance.profile_image = validated_data["profile_image"] or None
-
         instance.save()
         return instance
 
@@ -524,7 +544,109 @@ class SocialLinksSerializer(serializers.ModelSerializer):
         read_only_fields = ["user", "academy"]
 
 
+# --------------------------
+# Personal profile (User + UserProfile + social_links)
+# --------------------------
+class PersonalProfileSerializer(serializers.Serializer):
+    """For GET/PUT /api/me/profile: User + UserProfile fields."""
+    email = serializers.EmailField(required=False)
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    country_region = serializers.CharField(required=False, allow_blank=True)
+    city = serializers.CharField(required=False, allow_blank=True)
+    about_me = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    profile_image = serializers.ImageField(required=False, allow_null=True)
+    social_links = SocialLinksSerializer(required=False, read_only=True)
 
+
+# --------------------------
+# Education & WorkExperience
+# --------------------------
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
+        fields = [
+            "id",
+            "school_name",
+            "major",
+            "degree_type",
+            "gpa",
+            "start_date",
+            "end_date",
+            "is_current",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def validate(self, data):
+        if data.get("is_current") and data.get("end_date") is not None:
+            raise serializers.ValidationError(
+                {"end_date": "end_date must be null when is_current is True."}
+            )
+        start = data.get("start_date")
+        end = data.get("end_date")
+        if start and end and start > end:
+            raise serializers.ValidationError(
+                {"end_date": "end_date must be on or after start_date."}
+            )
+        return data
+
+
+class WorkExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkExperience
+        fields = [
+            "id",
+            "job_title",
+            "company",
+            "job_type",
+            "location",
+            "start_date",
+            "end_date",
+            "is_current",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def validate(self, data):
+        if data.get("is_current") and data.get("end_date") is not None:
+            raise serializers.ValidationError(
+                {"end_date": "end_date must be null when is_current is True."}
+            )
+        start = data.get("start_date")
+        end = data.get("end_date")
+        if start and end and start > end:
+            raise serializers.ValidationError(
+                {"end_date": "end_date must be on or after start_date."}
+            )
+        return data
+
+
+# --------------------------
+# Skills: search + attach/detach
+# --------------------------
+class SkillSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = ["id", "name"]
+
+
+class UserSkillAttachSerializer(serializers.Serializer):
+    """Body: { \"name\": \"React\" } - attach existing skill or create + attach."""
+    name = serializers.CharField(max_length=100)
+
+
+class UserSkillResponseSerializer(serializers.ModelSerializer):
+    """Attached skill with id and name for POST /api/me/skills response."""
+    skill_id = serializers.IntegerField(source="skill.id")
+    skill_name = serializers.CharField(source="skill.name")
+
+    class Meta:
+        model = UserSkill
+        fields = ["id", "skill_id", "skill_name", "created_at"]
 
 
 #---------------- Saved Courses and Jobs ----------------

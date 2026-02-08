@@ -1,8 +1,9 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 import uuid
-from datetime import timedelta,datetime
+from datetime import timedelta, datetime
 import random
 from cloudinary_storage.storage import MediaCloudinaryStorage
 
@@ -53,9 +54,26 @@ class Skill(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
 class UserSkill(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="user_skills",
+    )
+    skill = models.ForeignKey(
+        Skill,
+        on_delete=models.CASCADE,
+        related_name="user_skills",
+    )
     points = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "skill"],
+                name="unique_user_skill",
+            )
+        ]
 
 class Job(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
@@ -219,8 +237,14 @@ class Academy(models.Model):
 
 class UserProfile(models.Model):
     """Profile for regular users only. Academies use the Academy model, not UserProfile."""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
     phone_number = models.CharField(max_length=20, blank=True, null=True)
+    country_region = models.CharField(max_length=100, blank=True, default="")
+    city = models.CharField(max_length=100, blank=True, default="")
     profile_image = models.ImageField(
         storage=MediaCloudinaryStorage(),
         upload_to='profile_pics/',
@@ -305,10 +329,18 @@ class PasswordResetCode(models.Model):
 
 class SocialLinks(models.Model):
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, null=True, blank=True, related_name="social_links"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="social_links",
     )
     academy = models.OneToOneField(
-        Academy, on_delete=models.CASCADE, null=True, blank=True, related_name="social_links"
+        Academy,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="social_links",
     )
 
     github = models.URLField(blank=True, null=True)
@@ -324,8 +356,75 @@ class SocialLinks(models.Model):
         elif self.academy:
             return f"{self.academy.name}'s Social Links"
         return "Unknown Social Links"
-    
 
+
+class Education(models.Model):
+    """Education entries for a user. Max 10 per user enforced in API."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="educations",
+    )
+    school_name = models.CharField(max_length=255)
+    major = models.CharField(max_length=255, blank=True, default="")
+    degree_type = models.CharField(max_length=100, blank=True, default="")
+    gpa = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    is_current = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.is_current and self.end_date is not None:
+            raise ValidationError(
+                {"end_date": "end_date must be NULL when is_current is True."}
+            )
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError(
+                {"end_date": "end_date must be on or after start_date."}
+            )
+
+    def __str__(self):
+        return f"{self.user_id} - {self.school_name}"
+
+
+class WorkExperience(models.Model):
+    """Work experience entries for a user. Max 10 per user enforced in API."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="work_experiences",
+    )
+    job_title = models.CharField(max_length=255)
+    company = models.CharField(max_length=255)
+    job_type = models.CharField(max_length=100, blank=True, default="")
+    location = models.CharField(max_length=255, blank=True, default="")
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    is_current = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.is_current and self.end_date is not None:
+            raise ValidationError(
+                {"end_date": "end_date must be NULL when is_current is True."}
+            )
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError(
+                {"end_date": "end_date must be on or after start_date."}
+            )
+
+    def __str__(self):
+        return f"{self.user_id} - {self.job_title} at {self.company}"
 
 
 class SavedCourse(models.Model):

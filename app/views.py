@@ -3,8 +3,52 @@ from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view,permission_classes
 from rest_framework.response import Response
-from .models import Assessment, Badge, AssessmentSession, UserSkill, Job, Course, DynamicTechQuestion,Skill,CareerCategory,DynamicSoftSkillsQuestion,SkillScore,SkillTestResult,TemporaryUser, UserProfile,PasswordResetCode,SocialLinks,CareerQuestion,Academy,UserProfile,TemporaryAcademy,SavedCourse, SavedJob
-from .serializers import QuestionTechSerializer,CareerCategorySerializer,QuestionSoftSkillsSerializer,CustomTokenObtainPairSerializer,SkillTestResultSerializer,RegisterSerializer,TemporaryAcademyRegisterSerializer,UserProfileUpdateSerializer, AcademyUpdateSerializer,AcademyChangePasswordSerializer,SocialLinksSerializer,AcademyDetailSerializer,CareerQuestionSerializer,UserProfileSerializer
+from .models import (
+    Assessment,
+    Badge,
+    AssessmentSession,
+    UserSkill,
+    Job,
+    Course,
+    DynamicTechQuestion,
+    Skill,
+    CareerCategory,
+    DynamicSoftSkillsQuestion,
+    SkillScore,
+    SkillTestResult,
+    TemporaryUser,
+    UserProfile,
+    PasswordResetCode,
+    SocialLinks,
+    CareerQuestion,
+    Academy,
+    TemporaryAcademy,
+    SavedCourse,
+    SavedJob,
+    Education,
+    WorkExperience,
+)
+from .serializers import (
+    QuestionTechSerializer,
+    CareerCategorySerializer,
+    QuestionSoftSkillsSerializer,
+    CustomTokenObtainPairSerializer,
+    SkillTestResultSerializer,
+    RegisterSerializer,
+    TemporaryAcademyRegisterSerializer,
+    UserProfileUpdateSerializer,
+    AcademyUpdateSerializer,
+    AcademyChangePasswordSerializer,
+    SocialLinksSerializer,
+    AcademyDetailSerializer,
+    CareerQuestionSerializer,
+    UserProfileSerializer,
+    EducationSerializer,
+    WorkExperienceSerializer,
+    SkillSearchSerializer,
+    UserSkillAttachSerializer,
+    UserSkillResponseSerializer,
+)
 from django.contrib.auth.models import User
 import os, requests, random
 from rest_framework import status
@@ -14,7 +58,7 @@ import pandas as pd
 from groq import Groq
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, viewsets
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import serializers
@@ -1311,6 +1355,8 @@ class UserProfileView(APIView):
             "last_name": user.last_name,
             "email": user.email,
             "phone_number": profile.phone_number,
+            "country_region": getattr(profile, "country_region", "") or "",
+            "city": getattr(profile, "city", "") or "",
             "about_me": profile.about_me,
             "profile_image": profile_image_url,
             "social_links": social_data,
@@ -1372,11 +1418,11 @@ class UserProfileView(APIView):
             "last_name": user.last_name,
             "email": user.email,
             "phone_number": profile.phone_number,
+            "country_region": getattr(profile, "country_region", "") or "",
+            "city": getattr(profile, "city", "") or "",
             "about_me": profile.about_me,
             "profile_image": profile_image_url,
             "social_links": SocialLinksSerializer(social_links).data,
-
-            
             "saved_courses": list(saved_courses),
             "saved_jobs": list(saved_jobs),
         }, status=status.HTTP_200_OK)
@@ -1396,6 +1442,232 @@ class UserProfileView(APIView):
         return Response({"error": "No image to delete"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ---------------- /api/me/profile (Personal) ----------------
+class PersonalProfileView(APIView):
+    """GET/PUT /api/me/profile - User + UserProfile + social_links. Scoped to request.user. Requires JWT."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def _reject_academy(self, request):
+        if Academy.objects.filter(user=request.user).exists():
+            return Response(
+                {"error": "Academy accounts should use /api/academy/profile/"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return None
+
+    def get(self, request):
+        if resp := self._reject_academy(request):
+            return resp
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        social_links, _ = SocialLinks.objects.get_or_create(user=user)
+        try:
+            profile_image_url = (
+                request.build_absolute_uri(profile.profile_image.url)
+                if profile.profile_image else None
+            )
+        except Exception:
+            profile_image_url = None
+        return Response({
+            "email": user.email,
+            "first_name": user.first_name or "",
+            "last_name": user.last_name or "",
+            "phone_number": profile.phone_number or "",
+            "country_region": getattr(profile, "country_region", "") or "",
+            "city": getattr(profile, "city", "") or "",
+            "about_me": profile.about_me or "",
+            "profile_image": profile_image_url,
+            "social_links": SocialLinksSerializer(social_links).data,
+        })
+
+    def put(self, request):
+        if resp := self._reject_academy(request):
+            return resp
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        data = request.data
+        if "email" in data:
+            user.email = data["email"]
+        if "first_name" in data:
+            user.first_name = data["first_name"]
+        if "last_name" in data:
+            user.last_name = data["last_name"]
+        user.save()
+        if "phone_number" in data:
+            profile.phone_number = data["phone_number"]
+        if "country_region" in data:
+            profile.country_region = data["country_region"]
+        if "city" in data:
+            profile.city = data["city"]
+        if "about_me" in data:
+            profile.about_me = data["about_me"]
+        if "profile_image" in data:
+            profile.profile_image = data["profile_image"]
+        profile.save()
+        social_links, _ = SocialLinks.objects.get_or_create(user=user)
+        try:
+            profile_image_url = (
+                request.build_absolute_uri(profile.profile_image.url)
+                if profile.profile_image else None
+            )
+        except Exception:
+            profile_image_url = None
+        return Response({
+            "email": user.email,
+            "first_name": user.first_name or "",
+            "last_name": user.last_name or "",
+            "phone_number": profile.phone_number or "",
+            "country_region": getattr(profile, "country_region", "") or "",
+            "city": getattr(profile, "city", "") or "",
+            "about_me": profile.about_me or "",
+            "profile_image": profile_image_url,
+            "social_links": SocialLinksSerializer(social_links).data,
+        }, status=status.HTTP_200_OK)
+
+
+# ---------------- /api/me/social-links ----------------
+class SocialLinksMeView(APIView):
+    """GET/PUT/PATCH /api/me/social-links - CRUD scoped to request.user. Requires JWT."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _reject_academy(self, request):
+        if Academy.objects.filter(user=request.user).exists():
+            return Response(
+                {"error": "Academy accounts should use /api/academy/profile/ for social links."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return None
+
+    def get(self, request):
+        if resp := self._reject_academy(request):
+            return resp
+        social_links, _ = SocialLinks.objects.get_or_create(user=request.user)
+        return Response(SocialLinksSerializer(social_links).data)
+
+    def put(self, request):
+        if resp := self._reject_academy(request):
+            return resp
+        social_links, _ = SocialLinks.objects.get_or_create(user=request.user)
+        serializer = SocialLinksSerializer(social_links, data=request.data, partial=False)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        if resp := self._reject_academy(request):
+            return resp
+        social_links, _ = SocialLinks.objects.get_or_create(user=request.user)
+        serializer = SocialLinksSerializer(social_links, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# ---------------- /api/educations ----------------
+MAX_EDUCATIONS = 10
+MAX_WORK_EXPERIENCES = 10
+
+
+class EducationViewSet(viewsets.ModelViewSet):
+    """CRUD for Education. Queryset filtered by request.user. Max 10 per user. Requires JWT."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = EducationSerializer
+
+    def get_queryset(self):
+        return Education.objects.filter(user=self.request.user).order_by("-start_date")
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if Education.objects.filter(user=user).count() >= MAX_EDUCATIONS:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {"detail": f"Maximum {MAX_EDUCATIONS} education entries allowed per user."}
+            )
+        serializer.save(user=user)
+
+
+class WorkExperienceViewSet(viewsets.ModelViewSet):
+    """CRUD for WorkExperience. Queryset filtered by request.user. Max 10 per user. Requires JWT."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WorkExperienceSerializer
+
+    def get_queryset(self):
+        return WorkExperience.objects.filter(user=self.request.user).order_by("-start_date")
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if WorkExperience.objects.filter(user=user).count() >= MAX_WORK_EXPERIENCES:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {"detail": f"Maximum {MAX_WORK_EXPERIENCES} work experience entries allowed per user."}
+            )
+        serializer.save(user=user)
+
+
+# ---------------- /api/skills?query= & /api/me/skills ----------------
+class SkillSearchAPIView(APIView):
+    """GET /api/skills?query=xxx - top 20 matches by name (icontains). Requires JWT."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        query = (request.query_params.get("query") or "").strip()
+        if not query:
+            qs = Skill.objects.all().order_by("name")[:20]
+        else:
+            qs = Skill.objects.filter(name__icontains=query).order_by("name")[:20]
+        return Response(SkillSearchSerializer(qs, many=True).data)
+
+
+class UserSkillListAttachView(APIView):
+    """GET /api/me/skills - list current user's skills. POST - attach skill by name. Requires JWT."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """List all skills attached to the current user."""
+        qs = UserSkill.objects.filter(user=request.user).select_related("skill").order_by("-created_at")
+        return Response(UserSkillResponseSerializer(qs, many=True).data)
+
+    def post(self, request):
+        serializer = UserSkillAttachSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        name = (serializer.validated_data["name"] or "").strip()
+        if not name:
+            return Response(
+                {"detail": "Skill name is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        normalized = " ".join(name.split())
+        skill = Skill.objects.filter(name__iexact=normalized).first()
+        if skill is None:
+            skill = Skill.objects.create(name=normalized)
+        user_skill, created = UserSkill.objects.get_or_create(
+            user=request.user,
+            skill=skill,
+            defaults={"points": 1},
+        )
+        return Response(
+            UserSkillResponseSerializer(user_skill).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+class UserSkillDetachView(APIView):
+    """DELETE /api/me/skills/<skill_id> - Removes UserSkill for request.user + skill_id. Requires JWT."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, skill_id):
+        deleted, _ = UserSkill.objects.filter(user=request.user, skill_id=skill_id).delete()
+        return Response(
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
 
 

@@ -29,6 +29,8 @@ The **Procfile** runs on each deploy:
 
 So after you add PostgreSQL and set `DATABASE_URL`, the next deploy will run migrations and admin login should stop returning 500.
 
+**If you get 500 on the new tables (profile, educations, work-experiences, skills):** Those endpoints and the Admin pages for Education/Work Experience depend on migration `0066_profile_education_workexperience_userskill`. Ensure migrations have run (e.g. redeploy so the Procfile runs `migrate`, or locally run `python manage.py migrate app`). If migration fails with a **unique constraint** error on `app_userskill`, the migration will first remove duplicate (user, skill) rows, then add the constraint; if you see a different error, check the traceback in logs.
+
 ### 3. Create an admin user
 
 **Where to run it:** In Railway’s dashboard (browser), not in your project files.
@@ -126,10 +128,11 @@ python manage.py dumpdata --natural-foreign --natural-primary \
 
 **Step 2 – Load into Railway**
 
-**Option A – Railway Shell:** Commit `data.json` to the repo and deploy, then in Railway → app service → **Shell** run:
+**Option A – Railway Shell:** The fixture file must exist on the container. Commit `data.json` to the repo root and deploy, then in Railway → app service → **Shell** (or SSH) run:
 ```bash
-python manage.py loaddata data.json
+python manage.py loaddata /app/data.json -v 2
 ```
+Use the full path `/app/data.json` so Django finds the file. You can add `data.json` to `.gitignore` and remove it from the repo in a later commit if you don't want it in version control long term.
 
 **Option B – Railway CLI** (no need to commit the file): From your project folder (where `data.json` is), run:
 ```bash

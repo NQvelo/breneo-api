@@ -11,10 +11,27 @@ from django.forms.formsets import all_valid
 import logging
 
 from .models import (
-    Assessment, AssessmentSession, Badge,
-    Job, Skill, UserSkill, Course,
+    Assessment,
+    AssessmentSession,
+    Badge,
+    Job,
+    Skill,
+    UserSkill,
+    Course,
     DynamicTechQuestion,
-    CareerCategory, CareerQuestion, CareerOption,DynamicSoftSkillsQuestion,SkillScore,Academy,UserProfile,TemporaryUser,TemporaryAcademy,SkillTestResult,SocialLinks
+    CareerCategory,
+    CareerQuestion,
+    CareerOption,
+    DynamicSoftSkillsQuestion,
+    SkillScore,
+    Academy,
+    UserProfile,
+    TemporaryUser,
+    TemporaryAcademy,
+    SkillTestResult,
+    SocialLinks,
+    Education,
+    WorkExperience,
 )
 
 
@@ -279,9 +296,9 @@ class UserProfileAdminForm(forms.ModelForm):
 @admin.register(UserProfile)
 class UserProfileAdmin(ChangeFormSaveErrorMixin, admin.ModelAdmin):
     form = UserProfileAdminForm
-    list_display = ('id', 'user', 'phone_number', 'has_profile_image', 'about_me')
+    list_display = ('id', 'user', 'phone_number', 'country_region', 'city', 'has_profile_image', 'about_me')
     readonly_fields = ("id",)
-    fields = ('id', 'user', 'phone_number', 'profile_image', 'about_me')
+    fields = ('id', 'user', 'phone_number', 'country_region', 'city', 'profile_image', 'about_me')
 
     @admin.display(boolean=True, description="Has image")
     def has_profile_image(self, obj):
@@ -352,3 +369,17 @@ class AcademyAdmin(ChangeFormSaveErrorMixin, admin.ModelAdmin):
 class SocialLinksAdmin(admin.ModelAdmin):
     list_display = ('user', 'academy')
     search_fields = ('user__username', 'user__email', 'academy__user__first_name', 'academy__user__email')
+
+
+@admin.register(Education)
+class EducationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'school_name', 'major', 'degree_type', 'start_date', 'end_date', 'is_current')
+    list_filter = ('is_current',)
+    search_fields = ('user__email', 'school_name', 'major')
+
+
+@admin.register(WorkExperience)
+class WorkExperienceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'job_title', 'company', 'job_type', 'start_date', 'end_date', 'is_current')
+    list_filter = ('is_current',)
+    search_fields = ('user__email', 'job_title', 'company')

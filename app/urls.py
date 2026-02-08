@@ -1,15 +1,56 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
-    home, DashboardProgressAPI, StartAssessmentAPI,
-    ProgressMetricsAPI, SubmitAnswerAPI, CareerPathAPI,
-    DynamictestquestionsAPI, finish_assessment, RecommendedJobsAPI,
-    RecommendedCoursesAPI, FinishAssessmentAPI, CareerCategoryListAPIView,
-    RandomCareerQuestionsAPI, DynamicSoftSkillsquestionsAPI,
-    StartSoftAssessmentAPI, SubmitSoftAnswerAPI, FinishSoftAssessmentAPI,
-    CareerRoadmapAPI, save_test_results, get_user_results,
-    RegisterView,CustomTokenObtainPairView,TemporaryAcademyRegisterView,TemporaryAcademyVerifyView,VerifyCodeView,PasswordResetRequestView, PasswordResetVerifyView, SetNewPasswordView,AcademyProfileUpdateView,ChangePasswordView,AcademyChangePasswordView,UserProfileView,AcademyLoginView,AcademyDetailView,UserProfileDetailView,toggle_save_course,toggle_save_job,toggle_save_course_academy,toggle_save_job_academy,CreateOrderView,SaveCardView,AutomaticChargeView,BOGCallbackView
-    
+    home,
+    DashboardProgressAPI,
+    StartAssessmentAPI,
+    ProgressMetricsAPI,
+    SubmitAnswerAPI,
+    CareerPathAPI,
+    DynamictestquestionsAPI,
+    finish_assessment,
+    RecommendedJobsAPI,
+    RecommendedCoursesAPI,
+    FinishAssessmentAPI,
+    CareerCategoryListAPIView,
+    RandomCareerQuestionsAPI,
+    DynamicSoftSkillsquestionsAPI,
+    StartSoftAssessmentAPI,
+    SubmitSoftAnswerAPI,
+    FinishSoftAssessmentAPI,
+    CareerRoadmapAPI,
+    save_test_results,
+    get_user_results,
+    RegisterView,
+    CustomTokenObtainPairView,
+    TemporaryAcademyRegisterView,
+    TemporaryAcademyVerifyView,
+    VerifyCodeView,
+    PasswordResetRequestView,
+    PasswordResetVerifyView,
+    SetNewPasswordView,
+    AcademyProfileUpdateView,
+    ChangePasswordView,
+    AcademyChangePasswordView,
+    UserProfileView,
+    AcademyLoginView,
+    AcademyDetailView,
+    UserProfileDetailView,
+    toggle_save_course,
+    toggle_save_job,
+    toggle_save_course_academy,
+    toggle_save_job_academy,
+    CreateOrderView,
+    SaveCardView,
+    AutomaticChargeView,
+    BOGCallbackView,
+    PersonalProfileView,
+    SocialLinksMeView,
+    EducationViewSet,
+    WorkExperienceViewSet,
+    SkillSearchAPIView,
+    UserSkillListAttachView,
+    UserSkillDetachView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -58,7 +99,20 @@ urlpatterns = [
     
      #-------------- Profile ----------------
     path("api/profile/", UserProfileView.as_view(), name="user-profile"),
+    path("api/me/profile/", PersonalProfileView.as_view(), name="personal-profile"),
+    path("api/me/social-links/", SocialLinksMeView.as_view(), name="me-social-links"),
     path("api/academy/profile/", AcademyProfileUpdateView.as_view(), name="academy-profile"),
+
+    # -------------- New tables API (all require JWT: Authorization: Bearer <token>) ----------------
+    path("api/educations/", EducationViewSet.as_view({"get": "list", "post": "create"}), name="education-list"),
+    path("api/educations/<int:pk>/", EducationViewSet.as_view({"get": "retrieve", "put": "update", "patch": "partial_update", "delete": "destroy"}), name="education-detail"),
+    path("api/work-experiences/", WorkExperienceViewSet.as_view({"get": "list", "post": "create"}), name="workexperience-list"),
+    path("api/work-experiences/<int:pk>/", WorkExperienceViewSet.as_view({"get": "retrieve", "put": "update", "patch": "partial_update", "delete": "destroy"}), name="workexperience-detail"),
+
+    # Skills: search catalog; list my skills (GET) / attach (POST) at api/me/skills/; detach at api/me/skills/<id>/
+    path("api/skills/", SkillSearchAPIView.as_view(), name="skill-search"),
+    path("api/me/skills/", UserSkillListAttachView.as_view(), name="me-skills-list-attach"),
+    path("api/me/skills/<int:skill_id>/", UserSkillDetachView.as_view(), name="me-skills-detach"),
 
     # -------------Details --------------
     path('api/user/<int:user_id>/', UserProfileDetailView.as_view(), name='user-public-profile'),
