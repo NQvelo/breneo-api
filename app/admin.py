@@ -155,8 +155,23 @@ class ChangeFormSaveErrorMixin:
 
 admin.site.register(Assessment)
 admin.site.register(Badge)
-admin.site.register(Skill)
-admin.site.register(UserSkill)
+@admin.register(Skill)
+class SkillAdmin(admin.ModelAdmin):
+    list_display = ("id", "name")
+    search_fields = ("name",)
+    ordering = ("name",)
+
+
+@admin.register(UserSkill)
+class UserSkillAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "skill_name", "points", "created_at")
+    list_filter = ("user",)
+    search_fields = ("user__email", "skill__name")
+    ordering = ("-created_at",)
+
+    def skill_name(self, obj):
+        return obj.skill.name if obj.skill_id else "—"
+    skill_name.short_description = "Skill"
 admin.site.register(TemporaryUser)
 admin.site.register(TemporaryAcademy)
 

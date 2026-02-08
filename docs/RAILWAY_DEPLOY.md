@@ -29,7 +29,36 @@ The **Procfile** runs on each deploy:
 
 So after you add PostgreSQL and set `DATABASE_URL`, the next deploy will run migrations and admin login should stop returning 500.
 
-**If you get 500 on the new tables (profile, educations, work-experiences, skills):** Those endpoints and the Admin pages for Education/Work Experience depend on migration `0066_profile_education_workexperience_userskill`. Ensure migrations have run (e.g. redeploy so the Procfile runs `migrate`, or locally run `python manage.py migrate app`). If migration fails with a **unique constraint** error on `app_userskill`, the migration will first remove duplicate (user, skill) rows, then add the constraint; if you see a different error, check the traceback in logs.
+**If you get 500 on the new tables (profile, educations, work-experiences, skills):** Those endpoints and the Admin pages for Education/Work Experience depend on migration `0066_profile_education_workexperience_userskill`. Ensure migrations have run (e.g. redeploy so the Procfile runs `migrate`, or run migrate via Railway CLI/Shell below). If migration fails with a **unique constraint** error on `app_userskill`, the migration will first remove duplicate (user, skill) rows, then add the constraint; if you see a different error, check the traceback in logs.
+
+### Run migrations with Railway CLI
+
+To run migrations against your **Railway database** from your machine (using Railway’s `DATABASE_URL`):
+
+1. **Install Railway CLI** (if needed): [https://docs.railway.app/develop/cli](https://docs.railway.app/develop/cli)
+2. **Install Django and dependencies locally** (required — `railway run` runs the command on your machine with Railway’s env vars only):
+   ```bash
+   cd /path/to/breneo-api
+   python3 -m venv .venv
+   source .venv/bin/activate    # On Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+3. **Link the project** (once per machine):
+   ```bash
+   railway link
+   ```
+   Choose your project and the **app** service (the one that uses the database).
+4. **Run migrate:**
+   ```bash
+   railway run python manage.py migrate app
+   ```
+   Or migrate all apps: `railway run python manage.py migrate`
+
+**Or use Railway’s in-browser Shell:** In the [Railway dashboard](https://railway.app) → your **app service** → **Shell** tab → run:
+```bash
+python manage.py migrate app
+```
+The Shell already uses Railway’s environment (including `DATABASE_URL`).
 
 ### 3. Create an admin user
 
