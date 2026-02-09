@@ -87,6 +87,27 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
+# ---------------- Email Helper ----------------
+import logging
+logger = logging.getLogger(__name__)
+
+def send_email_safely(subject, text_message, html_message, from_email, to_email):
+    """Send email with timeout handling to prevent worker timeouts."""
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_message,
+            from_email=from_email,
+            to=[to_email]
+        )
+        if html_message:
+            msg.attach_alternative(html_message, "text/html")
+        msg.send(fail_silently=False)
+        return True, None
+    except Exception as e:
+        logger.error(f"Failed to send email to {to_email}: {str(e)}", exc_info=True)
+        return False, str(e)
+
 # ---------------- Home ----------------
 def home(request):
     return HttpResponse("Welcome to Breneo Student Dashboard!")
@@ -1223,14 +1244,19 @@ class RegisterView(generics.CreateAPIView):
         })
 
         # Send email with HTML template
-        msg = EmailMultiAlternatives(
+        success, error = send_email_safely(
             subject="Your Verification Code",
-            body=text_message,
+            text_message=text_message,
+            html_message=html_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[email]
+            to_email=email
         )
-        msg.attach_alternative(html_message, "text/html")
-        msg.send(fail_silently=False)
+        
+        if not success:
+            return Response({
+                "message": "Verification code created. Email delivery may be delayed.",
+                "error": "Email sending failed"
+            }, status=status.HTTP_202_ACCEPTED)
 
         return Response({"message": "Verification code sent to your email."}, status=200)
 
@@ -1901,14 +1927,19 @@ class TemporaryAcademyRegisterView(generics.CreateAPIView):
         })
 
         # Send email with HTML template
-        msg = EmailMultiAlternatives(
+        success, error = send_email_safely(
             subject="Your Academy Verification Code",
-            body=text_message,
+            text_message=text_message,
+            html_message=html_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[email]
+            to_email=email
         )
-        msg.attach_alternative(html_message, "text/html")
-        msg.send(fail_silently=False)
+        
+        if not success:
+            return Response({
+                "message": "Verification code created. Email delivery may be delayed.",
+                "error": "Email sending failed"
+            }, status=status.HTTP_202_ACCEPTED)
 
         return Response({"message": "Verification code sent to your email."}, status=200)
 
@@ -1992,14 +2023,19 @@ class PasswordResetRequestView(APIView):
         })
 
         # Send email with HTML template
-        msg = EmailMultiAlternatives(
+        success, error = send_email_safely(
             subject="Password Reset Code",
-            body=text_message,
+            text_message=text_message,
+            html_message=html_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[email]
+            to_email=email
         )
-        msg.attach_alternative(html_message, "text/html")
-        msg.send(fail_silently=False)
+        
+        if not success:
+            return Response({
+                "message": "Password reset code created. Email delivery may be delayed.",
+                "error": "Email sending failed"
+            }, status=status.HTTP_202_ACCEPTED)
 
         return Response({"message": "Password reset code sent to email"})
 
@@ -2080,14 +2116,13 @@ class ChangePasswordView(APIView):
                 'changed_at': timezone.now().strftime('%B %d, %Y at %I:%M %p'),
             })
 
-            msg = EmailMultiAlternatives(
+            send_email_safely(
                 subject="Password Changed Successfully",
-                body=text_message,
+                text_message=text_message,
+                html_message=html_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[user.email]
+                to_email=user.email
             )
-            msg.attach_alternative(html_message, "text/html")
-            msg.send(fail_silently=False)
 
         return Response({"message": "Password changed successfully"})
     
@@ -2119,14 +2154,13 @@ class AcademyChangePasswordView(APIView):
                     'changed_at': timezone.now().strftime('%B %d, %Y at %I:%M %p'),
                 })
 
-                msg = EmailMultiAlternatives(
+                send_email_safely(
                     subject="Password Changed Successfully",
-                    body=text_message,
+                    text_message=text_message,
+                    html_message=html_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[academy.user.email]
+                    to_email=academy.user.email
                 )
-                msg.attach_alternative(html_message, "text/html")
-                msg.send(fail_silently=False)
 
             return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

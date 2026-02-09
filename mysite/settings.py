@@ -209,6 +209,9 @@ if RESEND_API_KEY:
     EMAIL_HOST_USER = "resend"
     EMAIL_HOST_PASSWORD = RESEND_API_KEY
     DEFAULT_FROM_EMAIL = (os.getenv("DEFAULT_FROM_EMAIL") or "noreply@breneo.app").strip()
+    # SMTP timeout settings to prevent worker timeouts
+    EMAIL_TIMEOUT = 10  # seconds - prevents hanging connections
+    EMAIL_USE_SSL = False  # Use TLS, not SSL
 else:
     EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
     EMAIL_HOST = config("EMAIL_HOST", default="breneo.app")
