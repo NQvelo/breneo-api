@@ -1,5 +1,5 @@
 from django.urls import path
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .views import (
     home,
     DashboardProgressAPI,
@@ -23,6 +23,7 @@ from .views import (
     get_user_results,
     RegisterView,
     CustomTokenObtainPairView,
+    SafeTokenRefreshView,
     TemporaryAcademyRegisterView,
     TemporaryAcademyVerifyView,
     VerifyCodeView,
@@ -83,7 +84,7 @@ urlpatterns = [
     path("api/register/", RegisterView.as_view(), name="register"),
     path("api/login/", CustomTokenObtainPairView.as_view(), name="login"),
     path("api/verify-code/", VerifyCodeView.as_view(), name="verify-code"),
-    path("api/refresh/", TokenRefreshView.as_view(), name="refresh"),
+    path("api/refresh/", SafeTokenRefreshView.as_view(), name="refresh"),
     path("api/academy/login/", AcademyLoginView.as_view(), name="academy-login"),
     path("api/academy/register/", TemporaryAcademyRegisterView.as_view(), name="academy-register"),
     path('api/verify-academy-email/', TemporaryAcademyVerifyView.as_view(),name='verify-academy-email'),

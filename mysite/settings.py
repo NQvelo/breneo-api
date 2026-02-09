@@ -208,7 +208,7 @@ if RESEND_API_KEY:
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = "resend"
     EMAIL_HOST_PASSWORD = RESEND_API_KEY
-    DEFAULT_FROM_EMAIL = (os.getenv("DEFAULT_FROM_EMAIL") or "onboarding@resend.dev").strip()
+    DEFAULT_FROM_EMAIL = (os.getenv("DEFAULT_FROM_EMAIL") or "noreply@breneo.app").strip()
 else:
     EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
     EMAIL_HOST = config("EMAIL_HOST", default="breneo.app")
@@ -216,7 +216,7 @@ else:
     EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
     EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
     EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-    DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@brneeo.app")
+    DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@breneo.app")
 
 # Email logo URL (set BRENEO_LOGO_URL in .env or use default)
 BRENEO_LOGO_URL = os.getenv("BRENEO_LOGO_URL", "")

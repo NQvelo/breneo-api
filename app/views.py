@@ -56,7 +56,7 @@ from rest_framework import generics
 import json
 import pandas as pd
 from groq import Groq
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, permissions, viewsets
 from django.contrib.auth.models import User
@@ -1794,6 +1794,19 @@ class AcademyProfileUpdateView(APIView):
 # --------------------------
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class SafeTokenRefreshView(TokenRefreshView):
+    """Return 401 when refresh token references a deleted user instead of 500."""
+
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except get_user_model().DoesNotExist:
+            return Response(
+                {"detail": "User no longer exists. Please log in again."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
 
 class AcademyLoginView(APIView):

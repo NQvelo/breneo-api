@@ -104,3 +104,19 @@ For `DEFAULT_FROM_EMAIL=noreply@breneo.app` to work:
 4. Wait for verification (usually a few minutes)
 
 Until verified, you can use `onboarding@resend.dev` for testing (no verification needed).
+
+---
+
+## Troubleshooting
+
+### "User matching query does not exist" on `/api/refresh/` (500)
+- **Cause:** The refresh token was issued for a user that no longer exists (e.g. deleted user, or token from another database).
+- **Fix:** The API now returns **401** with `{"detail": "User no longer exists. Please log in again."}`. Frontend should clear tokens and redirect to login.
+
+### "From: noreply@localhost" in emails
+- **Cause:** On Railway, `RESEND_API_KEY` or `DEFAULT_FROM_EMAIL` is not set, so the app uses the fallback backend and default from address.
+- **Fix:** In Railway → your app → **Variables**, set `RESEND_API_KEY` and `DEFAULT_FROM_EMAIL` (see Critical Variables above), then redeploy.
+
+### 404 on `/api/academy/login/`
+- **Correct URL:** `POST /api/academy/login/` (with trailing slash). Base URL is your Railway app, e.g. `https://your-app.up.railway.app/api/academy/login/`.
+- Ensure the request is **POST** with body `{"email": "...", "password": "..."}` (or `email` can be academy name).
