@@ -1,3 +1,4 @@
+# Use Python 3.11 or 3.12 (scipy/sklearn have no wheels for 3.14)
 annotated-types==0.7.0
 anyio==4.10.0
 asgiref==3.9.1
@@ -27,7 +28,7 @@ itsdangerous==2.2.0
 jiter==0.10.0
 joblib==1.5.1
 mypy_extensions==1.1.0
-numpy==2.3.2
+numpy>=2.0,<2.4
 oauthlib==3.3.1
 openai==1.99.9
 packaging==25.0
@@ -47,9 +48,9 @@ python-http-client==3.3.7
 pytokens==0.1.10
 pytz==2025.2
 requests==2.32.4
-resend==2.5.0
-scikit-learn==1.7.1
-scipy==1.16.1
+resend==2.5.1
+scikit-learn>=1.5,<2
+scipy>=1.14,<1.17
 sendgrid==3.6.5
 sendgrid-django==4.2.0
 six==1.17.0

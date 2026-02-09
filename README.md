@@ -72,9 +72,12 @@ For the full list of dependencies, see `requirements.txt`.
 
 ## ⚙️ Installation & Setup
 
+**Python version:** Use **Python 3.11 or 3.12**. Python 3.14 is not yet supported by scipy/scikit-learn binary wheels (install would require a Fortran compiler).
+
 ```bash
 git clone https://github.com/gaga-chituashvili/breneo.git
 
+# Use Python 3.11 or 3.12 (e.g. pyenv install 3.12 && pyenv local 3.12)
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
