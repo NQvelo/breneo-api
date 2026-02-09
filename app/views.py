@@ -64,8 +64,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import serializers
 import time
 from django.contrib.auth.hashers import make_password,check_password
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.utils import timezone
 from rest_framework.parsers import JSONParser, FormParser,MultiPartParser
 from random import randint
@@ -1210,13 +1211,26 @@ class RegisterView(generics.CreateAPIView):
         temp_user.generate_verification_code()
         temp_user.save()
 
-        send_mail(
-            "Your Verification Code",
-            f"Your verification code is: {temp_user.verification_code}",
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False
+        # Render email templates
+        html_message = render_to_string('emails/verification_code.html', {
+            'verification_code': temp_user.verification_code,
+            'first_name': temp_user.first_name,
+            'logo_url': getattr(settings, 'BRENEO_LOGO_URL', ''),
+        })
+        text_message = render_to_string('emails/verification_code.txt', {
+            'verification_code': temp_user.verification_code,
+            'first_name': temp_user.first_name,
+        })
+
+        # Send email with HTML template
+        msg = EmailMultiAlternatives(
+            subject="Your Verification Code",
+            body=text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email]
         )
+        msg.attach_alternative(html_message, "text/html")
+        msg.send(fail_silently=False)
 
         return Response({"message": "Verification code sent to your email."}, status=200)
 
@@ -1864,13 +1878,24 @@ class TemporaryAcademyRegisterView(generics.CreateAPIView):
         temp_academy.generate_verification_code()
         temp_academy.save()
 
-        send_mail(
-            "Your Academy Verification Code",
-            f"Your verification code is: {temp_academy.verification_code}",
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False
+        # Render email templates
+        html_message = render_to_string('emails/academy_verification_code.html', {
+            'verification_code': temp_academy.verification_code,
+            'logo_url': getattr(settings, 'BRENEO_LOGO_URL', ''),
+        })
+        text_message = render_to_string('emails/academy_verification_code.txt', {
+            'verification_code': temp_academy.verification_code,
+        })
+
+        # Send email with HTML template
+        msg = EmailMultiAlternatives(
+            subject="Your Academy Verification Code",
+            body=text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email]
         )
+        msg.attach_alternative(html_message, "text/html")
+        msg.send(fail_silently=False)
 
         return Response({"message": "Verification code sent to your email."}, status=200)
 
@@ -1944,12 +1969,24 @@ class PasswordResetRequestView(APIView):
         code = f"{randint(100000, 999999)}"
         PasswordResetCode.objects.create(user=user, code=code)
 
-        send_mail(
+        # Render email templates
+        html_message = render_to_string('emails/password_reset.html', {
+            'reset_code': code,
+            'logo_url': getattr(settings, 'BRENEO_LOGO_URL', ''),
+        })
+        text_message = render_to_string('emails/password_reset.txt', {
+            'reset_code': code,
+        })
+
+        # Send email with HTML template
+        msg = EmailMultiAlternatives(
             subject="Password Reset Code",
-            message=f"Your password reset code is: {code}",
-            from_email=None, 
-            recipient_list=[email],
+            body=text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email]
         )
+        msg.attach_alternative(html_message, "text/html")
+        msg.send(fail_silently=False)
 
         return Response({"message": "Password reset code sent to email"})
 
@@ -2018,6 +2055,27 @@ class ChangePasswordView(APIView):
         user.set_password(serializer.validated_data['new_password'])
         user.save()
 
+        # Send password changed confirmation email
+        if user.email:
+            html_message = render_to_string('emails/password_changed.html', {
+                'first_name': user.first_name or user.username,
+                'changed_at': timezone.now().strftime('%B %d, %Y at %I:%M %p'),
+                'logo_url': getattr(settings, 'BRENEO_LOGO_URL', ''),
+            })
+            text_message = render_to_string('emails/password_changed.txt', {
+                'first_name': user.first_name or user.username,
+                'changed_at': timezone.now().strftime('%B %d, %Y at %I:%M %p'),
+            })
+
+            msg = EmailMultiAlternatives(
+                subject="Password Changed Successfully",
+                body=text_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email]
+            )
+            msg.attach_alternative(html_message, "text/html")
+            msg.send(fail_silently=False)
+
         return Response({"message": "Password changed successfully"})
     
 
@@ -2035,6 +2093,28 @@ class AcademyChangePasswordView(APIView):
             academy = request.user
             academy.password = make_password(serializer.validated_data['new_password'])
             academy.save()
+
+            # Send password changed confirmation email
+            if hasattr(academy, 'user') and academy.user and academy.user.email:
+                html_message = render_to_string('emails/password_changed.html', {
+                    'first_name': academy.user.first_name or academy.name or academy.user.username,
+                    'changed_at': timezone.now().strftime('%B %d, %Y at %I:%M %p'),
+                    'logo_url': getattr(settings, 'BRENEO_LOGO_URL', ''),
+                })
+                text_message = render_to_string('emails/password_changed.txt', {
+                    'first_name': academy.user.first_name or academy.name or academy.user.username,
+                    'changed_at': timezone.now().strftime('%B %d, %Y at %I:%M %p'),
+                })
+
+                msg = EmailMultiAlternatives(
+                    subject="Password Changed Successfully",
+                    body=text_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[academy.user.email]
+                )
+                msg.attach_alternative(html_message, "text/html")
+                msg.send(fail_silently=False)
+
             return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

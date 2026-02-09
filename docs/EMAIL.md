@@ -7,10 +7,12 @@
    ```env
    RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
    DEFAULT_FROM_EMAIL=onboarding@resend.dev
+   BRENEO_LOGO_URL=https://your-domain.com/path/to/logo.png
    ```
 
    - Get the API key from [Resend → API Keys](https://resend.com/api-keys).
    - Use `onboarding@resend.dev` for testing (no domain verification needed). For production, use an address from a [verified domain](https://resend.com/domains) (e.g. `noreply@yourdomain.com`).
+   - Set `BRENEO_LOGO_URL` to a publicly accessible URL of your logo image (PNG, JPG, or SVG). The logo will appear at the top of all email templates. If not set, emails will be sent without a logo.
 
 2. **Restart the server** after changing `.env` so the new values are loaded.
 

@@ -1,0 +1,14 @@
+Academy Verification
+
+Hello,
+
+Thank you for registering your academy with Breneo! Please use the verification code below to complete your academy registration:
+
+Verification Code: {{ verification_code }}
+
+This code will expire in 10 minutes. If you didn't request this code, please ignore this email.
+
+Best regards,
+The Breneo Team
+
+This is an automated message. Please do not reply to this email.

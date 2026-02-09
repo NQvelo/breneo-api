@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            max-width: 180px;
+            height: auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .code-box {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 25px 15px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .code-digits {
+            display: inline-flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .digit {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #4CAF50;
+            background-color: #ffffff;
+            border: 3px solid #4CAF50;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if logo_url %}
+        <div class="logo-container">
+            <img src="{{ logo_url }}" alt="Breneo Logo" class="logo" />
+        </div>
+        {% endif %}
+        
+        <div class="header">
+            <h1>Email Verification</h1>
+        </div>
+        
+        <p>Hello {{ first_name|default:"there" }},</p>
+        
+        <p>Thank you for registering with Breneo! Please use the verification code below to complete your registration:</p>
+        
+        <div class="code-box">
+            <div class="code-digits">
+                {% for digit in verification_code %}
+                <span class="digit">{{ digit }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <p>This code will expire in 10 minutes. If you didn't request this code, please ignore this email.</p>
+        
+        <div class="footer">
+            <p>Best regards,<br>The Breneo Team</p>
+            <p style="font-size: 11px; color: #999;">This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

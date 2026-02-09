@@ -218,6 +218,9 @@ else:
     EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
     DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@localhost")
 
+# Email logo URL (set BRENEO_LOGO_URL in .env or use default)
+BRENEO_LOGO_URL = os.getenv("BRENEO_LOGO_URL", "")
+
 # Show which email backend is active when settings load (restart server to see this)
 if RESEND_API_KEY:
     print("[Email] Using Resend SMTP – emails will appear in resend.com → Logs")
