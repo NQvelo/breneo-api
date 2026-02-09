@@ -224,9 +224,9 @@ else:
 # Email logo URL (set BRENEO_LOGO_URL in .env or use default)
 BRENEO_LOGO_URL = os.getenv("BRENEO_LOGO_URL", "")
 
-# Show which email backend is active when settings load (restart server to see this)
+# Show which email method is active (app/views.py uses Resend HTTP API when key is set)
 if RESEND_API_KEY:
-    print("[Email] Using Resend SMTP – emails will appear in resend.com → Logs")
+    print("[Email] Using Resend HTTP API – emails will appear in resend.com → Logs")
 else:
     print("[Email] RESEND_API_KEY not set – emails only in terminal, not in Resend")
 

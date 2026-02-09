@@ -92,7 +92,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 def send_email_safely(subject, text_message, html_message, from_email, to_email):
-    """Send email with timeout handling to prevent worker timeouts."""
+    """Send email via Resend HTTP API (avoids SMTP timeouts on Railway) or Django backend."""
+    resend_key = getattr(settings, "RESEND_API_KEY", "") or os.getenv("RESEND_API_KEY", "")
+    if resend_key:
+        try:
+            import resend
+            resend.api_key = resend_key
+            params = {
+                "from": from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_message or text_message,
+            }
+            if text_message and html_message:
+                params["text"] = text_message
+            resend.Emails.send(params)
+            return True, None
+        except Exception as e:
+            logger.error(f"Failed to send email to {to_email}: {str(e)}", exc_info=True)
+            return False, str(e)
+    # Fallback: Django SMTP (e.g. local dev with console backend)
     try:
         msg = EmailMultiAlternatives(
             subject=subject,

@@ -1,5 +1,7 @@
 # Email sending – what you need
 
+Emails are sent via **Resend HTTP API** (not SMTP) to avoid timeouts on Railway and other cloud hosts.
+
 ## Checklist for successful sending
 
 1. **In `.env` (project root):**
