@@ -27,6 +27,7 @@ from .models import (
     SavedJob,
     Education,
     WorkExperience,
+    UserIndustryProfile,
 )
 from .serializers import (
     QuestionTechSerializer,
@@ -68,6 +69,7 @@ from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework.parsers import JSONParser, FormParser,MultiPartParser
 from random import randint
 from .serializers import (
@@ -1623,6 +1625,57 @@ class SocialLinksMeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# ---------------- /api/me/industry-profile ----------------
+class IndustryProfileView(APIView):
+    """PUT /api/me/industry-profile - Upsert industry years for request.user. Requires JWT."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request):
+        data = request.data
+        if not isinstance(data, dict):
+            return Response(
+                {"detail": "Request body must be JSON object."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        industry_years_json = data.get("industry_years_json")
+        if industry_years_json is None:
+            industry_years_json = {}
+        if not isinstance(industry_years_json, dict):
+            return Response(
+                {"detail": "industry_years_json must be an object."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        updated_at_str = data.get("updated_at")
+        if updated_at_str is not None:
+            updated_at = parse_datetime(str(updated_at_str))
+            if updated_at is None:
+                return Response(
+                    {"detail": "updated_at must be a valid ISO 8601 datetime string."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            updated_at = timezone.now()
+
+        profile, created = UserIndustryProfile.objects.update_or_create(
+            user=request.user,
+            defaults={
+                "industry_years_json": industry_years_json,
+                "updated_at": updated_at,
+            },
+        )
+
+        return Response(
+            {
+                "industry_years_json": profile.industry_years_json,
+                "updated_at": profile.updated_at.isoformat(),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 # ---------------- /api/educations ----------------

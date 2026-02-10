@@ -398,6 +398,20 @@ class Education(models.Model):
         return f"{self.user_id} - {self.school_name}"
 
 
+class UserIndustryProfile(models.Model):
+    """One row per user: industry years computed by frontend from work experience. Stored for job match later."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="industry_profile",
+    )
+    industry_years_json = models.JSONField(default=dict)  # e.g. {"fintech": 2.5, "e-commerce": 0.8}; can be {}
+    updated_at = models.DateTimeField()  # Set from request body or server time
+
+    def __str__(self):
+        return f"{self.user.username} Industry Profile"
+
+
 class WorkExperience(models.Model):
     """Work experience entries for a user. Max 10 per user enforced in API."""
     user = models.ForeignKey(

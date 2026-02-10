@@ -47,6 +47,7 @@ from .views import (
     BOGCallbackView,
     PersonalProfileView,
     SocialLinksMeView,
+    IndustryProfileView,
     EducationViewSet,
     WorkExperienceViewSet,
     SkillSearchAPIView,
@@ -104,6 +105,7 @@ urlpatterns = [
     path("api/profile/", UserProfileView.as_view(), name="user-profile"),
     path("api/me/profile/", PersonalProfileView.as_view(), name="personal-profile"),
     path("api/me/social-links/", SocialLinksMeView.as_view(), name="me-social-links"),
+    path("api/me/industry-profile/", IndustryProfileView.as_view(), name="industry-profile"),
     path("api/academy/profile/", AcademyProfileUpdateView.as_view(), name="academy-profile"),
 
     # -------------- New tables API (all require JWT: Authorization: Bearer <token>) ----------------

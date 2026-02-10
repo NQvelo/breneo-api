@@ -32,6 +32,7 @@ from .models import (
     SocialLinks,
     Education,
     WorkExperience,
+    UserIndustryProfile,
 )
 
 
@@ -398,3 +399,9 @@ class WorkExperienceAdmin(admin.ModelAdmin):
     list_display = ('user', 'job_title', 'company', 'job_type', 'start_date', 'end_date', 'is_current')
     list_filter = ('is_current',)
     search_fields = ('user__email', 'job_title', 'company')
+
+
+@admin.register(UserIndustryProfile)
+class UserIndustryProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'updated_at')
+    search_fields = ('user__email',)
