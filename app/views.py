@@ -1629,9 +1629,22 @@ class SocialLinksMeView(APIView):
 
 # ---------------- /api/me/industry-profile ----------------
 class IndustryProfileView(APIView):
-    """PUT /api/me/industry-profile - Upsert industry years for request.user. Requires JWT."""
+    """GET/PUT /api/me/industry-profile - Fetch or upsert industry years for request.user. Requires JWT."""
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            profile = UserIndustryProfile.objects.get(user=request.user)
+            return Response({
+                "industry_years_json": profile.industry_years_json,
+                "updated_at": profile.updated_at.isoformat(),
+            })
+        except UserIndustryProfile.DoesNotExist:
+            return Response({
+                "industry_years_json": {},
+                "updated_at": None,
+            })
 
     def put(self, request):
         data = request.data
