@@ -33,6 +33,7 @@ from .models import (
     Education,
     WorkExperience,
     UserIndustryProfile,
+    UserSubscription,
 )
 
 
@@ -401,7 +402,8 @@ class WorkExperienceAdmin(admin.ModelAdmin):
     search_fields = ('user__email', 'job_title', 'company')
 
 
-@admin.register(UserIndustryProfile)
-class UserIndustryProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'updated_at')
-    search_fields = ('user__email',)
+@admin.register(UserSubscription)
+class UserSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("user", "is_active", "next_payment_date", "parent_order_id")
+    list_filter = ("is_active", "next_payment_date")
+    search_fields = ("user__email", "parent_order_id")
