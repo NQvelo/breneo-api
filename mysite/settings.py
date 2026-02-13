@@ -238,6 +238,7 @@ BOG_CLIENT_SECRET = os.getenv("BOG_CLIENT_SECRET")
 BOG_TOKEN_URL = os.getenv("BOG_TOKEN_URL")
 BOG_ORDER_URL = os.getenv("BOG_ORDER_URL")
 BOG_SUBSCRIBE_URL = os.getenv("BOG_SUBSCRIBE_URL")
+BOG_CALLBACK_URL = os.getenv("BOG_CALLBACK_URL", "https://web-production-80ed8.up.railway.app/api/bog/callback/")
 BOG_CALLBACK_SECRET_PUBLIC_KEY = os.getenv("BOG_CALLBACK_SECRET_PUBLIC_KEY")
 
 # ----------- Debug: log all errors with traceback to console -----------

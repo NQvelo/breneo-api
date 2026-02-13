@@ -2553,9 +2553,12 @@ class CreateOrderView(APIView):
             "Accept-Language": "ka",
         }
 
+        # Use settings.BOG_CALLBACK_URL instead of hardcoded URL
+        callback_url = getattr(settings, "BOG_CALLBACK_URL", "https://web-production-80ed8.up.railway.app/api/bog/callback/")
+
         payload = {
-            "callback_url": "https://breneo.onrender.com/api/bog/callback/",
-            "external_order_id": f"user-{request.user.id}",
+            "callback_url": callback_url,
+            "external_order_id": f"user-{request.user.id}-{int(time.time())}",
             "purchase_units": {
                 "currency": "GEL",
                 "total_amount": 10,
@@ -2573,13 +2576,17 @@ class CreateOrderView(APIView):
             }
         }
 
-        res = requests.post(settings.BOG_ORDER_URL, headers=headers, json=payload)
-        data = res.json()
-
-        return Response({
-            "redirect_url": data["_links"]["redirect"]["href"],
-            "order_id": data["id"]
-        })
+        try:
+            res = requests.post(settings.BOG_ORDER_URL, headers=headers, json=payload)
+            res.raise_for_status()
+            data = res.json()
+            return Response({
+                "redirect_url": data["_links"]["redirect"]["href"],
+                "order_id": data["id"]
+            })
+        except Exception as e:
+            logger.error(f"BOG Create Order Error: {str(e)}")
+            return Response({"error": "Failed to create BOG order"}, status=500)
 
 
 
@@ -2599,10 +2606,17 @@ class SaveCardView(APIView):
 
         headers = {"Authorization": f"Bearer {token}"}
 
-        res = requests.put(url, headers=headers)
-        data = res.json()
+        try:
+            res = requests.put(url, headers=headers)
+            res.raise_for_status()
+            data = res.json()
+        except Exception as e:
+            logger.error(f"BOG Save Card Error: {str(e)}")
+            return Response({"error": "Failed to save card with BOG"}, status=500)
 
         parent_order_id = data.get("parent_order_id")
+        if not parent_order_id:
+            return Response({"error": "No parent_order_id returned"}, status=400)
 
         # Save subscription info
         UserSubscription.objects.update_or_create(
@@ -2620,6 +2634,48 @@ class SaveCardView(APIView):
 
 # ------------------Automatic charge using saved card ------------------
 
+def perform_automatic_charge(subscription):
+    """
+    Helper function to perform an automatic charge for a given subscription.
+    Returns (success, data_or_error_message)
+    """
+    token = get_bog_token()
+    if not token:
+        return False, "Token error"
+
+    url = f"{settings.BOG_ORDER_URL}/{subscription.parent_order_id}"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+    callback_url = getattr(settings, "BOG_CALLBACK_URL", "https://web-production-80ed8.up.railway.app/api/bog/callback/")
+
+    payload = {
+        "callback_url": callback_url,
+        "purchase_units": {
+            "total_amount": 10,
+            "basket": [
+                {
+                    "quantity": 1,
+                    "unit_price": 10,
+                    "product_id": "monthly_subscription"
+                }
+            ]
+        }
+    }
+
+    try:
+        res = requests.post(url, headers=headers, json=payload)
+        res.raise_for_status()
+        data = res.json()
+        return True, data
+    except Exception as e:
+        error_msg = f"BOG Automatic Charge Error: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+
 class AutomaticChargeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -2628,63 +2684,79 @@ class AutomaticChargeView(APIView):
         if not sub:
             return Response({"error": "No active subscription"}, status=404)
 
-        token = get_bog_token()
-        if not token:
-            return Response({"error": "Token error"}, status=400)
-
-        url = f"{settings.BOG_ORDER_URL}/{sub.parent_order_id}"
-
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "callback_url": "https://breneo.onrender.com/api/bog/callback/",
-            "purchase_units": {
-                "total_amount": 10,
-                "basket": [
-                    {
-                        "quantity": 1,
-                        "unit_price": 10,
-                        "product_id": "monthly_subscription"
-                    }
-                ]
-            }
-        }
-
-        res = requests.post(url, headers=headers, json=payload)
-        data = res.json()
-
-        return Response({"next_payment_order_id": data["id"]})
+        success, result = perform_automatic_charge(sub)
+        if success:
+            return Response({"next_payment_order_id": result["id"]})
+        else:
+            return Response({"error": result}, status=500)
 
 
 # ------------------ BOG Callback Handler ------------------
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+import base64
 
 class BOGCallbackView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    def post(self, request):
-        body = request.data
+    def verify_signature(self, request):
+        signature_b64 = request.headers.get("Callback-Signature")
+        if not signature_b64:
+            return False
 
-        order_status = body["order_status"]["key"]
-        parent_order_id = body["payment_detail"].get("parent_order_id")
+        public_key_str = getattr(settings, "BOG_CALLBACK_SECRET_PUBLIC_KEY", None)
+        if not public_key_str:
+            logger.warning("BOG_CALLBACK_SECRET_PUBLIC_KEY not configured. Skipping verification.")
+            return True # Or False, depending on how strict we want to be during setup
+
+        try:
+            public_key = load_pem_public_key(public_key_str.encode())
+            signature = base64.b64decode(signature_b64)
+            # Documentation says: "Verification must happen before payload deserialization"
+            # We use request.body (raw bytes) for verification
+            public_key.verify(
+                signature,
+                request.body,
+                padding.PKCS1v15(),
+                hashes.SHA256()
+            )
+            return True
+        except Exception as e:
+            logger.error(f"BOG Callback Signature Verification Failed: {str(e)}")
+            return False
+
+    def post(self, request):
+        if not self.verify_signature(request):
+            return Response({"error": "Invalid signature"}, status=401)
+
+        body = request.data
+        logger.info(f"BOG Callback received: {json.dumps(body)}")
+
+        order_status = body.get("order_status", {}).get("key")
+        payment_detail = body.get("payment_detail", {})
+        parent_order_id = payment_detail.get("parent_order_id")
 
         if not parent_order_id:
+            # Might be a one-time payment or missing detail
+            logger.info("BOG Callback: No parent_order_id, skipping subscription update.")
             return Response({"status": "ignored"})
 
         if order_status == "completed":
             sub = UserSubscription.objects.filter(parent_order_id=parent_order_id).first()
             if sub:
                 sub.next_payment_date = timezone.now().date() + timedelta(days=30)
+                sub.is_active = True
                 sub.save()
+                logger.info(f"Subscription updated for order_id: {body.get('id')}")
 
-        if order_status in ["failed", "rejected"]:
+        elif order_status in ["failed", "rejected"]:
             sub = UserSubscription.objects.filter(parent_order_id=parent_order_id).first()
             if sub:
                 sub.is_active = False
                 sub.save()
+                logger.warning(f"Subscription deactivated due to failed payment: {order_status}")
 
         return Response({"status": "ok"})
 

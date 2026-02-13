@@ -5,8 +5,6 @@ and machine learning–based predictions using a pre-trained model.
 The backend is designed to be scalable and easily integrated with frontend
 applications such as React.
 
-
-
 ## 📁 Project Structure
 
 ```text
@@ -50,10 +48,6 @@ BRENE01/
 └── requirements.txt            # Python dependencies
 ```
 
-
-
-
-
 ## 📦 Dependencies
 
 This project relies on the following key libraries and tools:
@@ -69,7 +63,6 @@ This project relies on the following key libraries and tools:
 
 For the full list of dependencies, see `requirements.txt`.
 
-
 ## ⚙️ Installation & Setup
 
 **Python version:** Use **Python 3.11 or 3.12**. Python 3.14 is not yet supported by scipy/scikit-learn binary wheels (install would require a Fortran compiler).
@@ -84,3 +77,4 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
+```
