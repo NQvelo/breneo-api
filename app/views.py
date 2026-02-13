@@ -2529,7 +2529,10 @@ def get_bog_token():
     res = requests.post(settings.BOG_TOKEN_URL, headers=headers, data=data)
 
     if res.status_code != 200:
-        print("BOG TOKEN ERROR:", res.text)
+        logger.error(f"BOG TOKEN ERROR - Status: {res.status_code}")
+        logger.error(f"BOG TOKEN ERROR - Response: {res.text}")
+        logger.error(f"BOG TOKEN ERROR - URL: {settings.BOG_TOKEN_URL}")
+        logger.error(f"BOG TOKEN ERROR - Client ID: {settings.BOG_CLIENT_ID}")
         return None
 
     return res.json().get("access_token")
@@ -2584,9 +2587,18 @@ class CreateOrderView(APIView):
                 "redirect_url": data["_links"]["redirect"]["href"],
                 "order_id": data["id"]
             })
+        except requests.exceptions.HTTPError as e:
+            # Log the full response for debugging
+            logger.error(f"BOG Create Order HTTP Error: {str(e)}")
+            logger.error(f"BOG Response Status: {e.response.status_code}")
+            logger.error(f"BOG Response Body: {e.response.text}")
+            return Response({
+                "error": "Failed to create BOG order",
+                "details": e.response.text if hasattr(e, 'response') else str(e)
+            }, status=500)
         except Exception as e:
             logger.error(f"BOG Create Order Error: {str(e)}")
-            return Response({"error": "Failed to create BOG order"}, status=500)
+            return Response({"error": f"Failed to create BOG order: {str(e)}"}, status=500)
 
 
 
