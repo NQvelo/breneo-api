@@ -35,6 +35,7 @@ from .models import (
     UserIndustryProfile,
     UserSubscription,
     SubscriptionPlan,
+    PaymentHistory,
 )
 
 
@@ -416,3 +417,11 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
     search_fields = ("name", "description")
     ordering = ("price",)
+
+@admin.register(PaymentHistory)
+class PaymentHistoryAdmin(admin.ModelAdmin):
+    list_display = ("order_id", "user", "amount", "currency", "status", "created_at")
+    list_filter = ("status", "created_at", "currency")
+    search_fields = ("order_id", "user__email", "card_mask")
+    readonly_fields = ("created_at",)
+    ordering = ("-created_at",)
