@@ -2590,6 +2590,7 @@ class CreateOrderView(APIView):
                     }
                 ]
             },
+            "intent": "ANY",
             "redirect_urls": {
                 "success": f"https://dashboard.breneo.app/success?plan_id={plan.id}",
                 "fail": "https://dashboard.breneo.app/fail",
@@ -2643,15 +2644,26 @@ class SaveCardView(APIView):
 
         url = f"{settings.BOG_ORDER_URL}/{order_id}/cards"
 
-        headers = {"Authorization": f"Bearer {token}"}
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Idempotency-Key": f"save-card-{order_id}"
+        }
 
         try:
             res = requests.put(url, headers=headers)
             res.raise_for_status()
             data = res.json()
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"BOG Save Card HTTP Error: {str(e)}")
+            logger.error(f"BOG Response Status: {e.response.status_code}")
+            logger.error(f"BOG Response Body: {e.response.text}")
+            return Response({
+                "error": "Failed to save card with BOG",
+                "details": e.response.text if hasattr(e, 'response') else str(e)
+            }, status=500)
         except Exception as e:
             logger.error(f"BOG Save Card Error: {str(e)}")
-            return Response({"error": "Failed to save card with BOG"}, status=500)
+            return Response({"error": "Failed to save card with BOG", "details": str(e)}, status=500)
 
         parent_order_id = data.get("parent_order_id")
         if not parent_order_id:
