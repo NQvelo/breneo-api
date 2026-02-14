@@ -150,6 +150,7 @@ urlpatterns = [
     # ----------- Subscription Plans -----------
     path("api/subscription-plans/", SubscriptionPlanListView.as_view()),
     path("api/me/subscription/", UserSubscriptionView.as_view()),
+    path("api/me/payment-history/", PaymentHistoryView.as_view()),
 ] 
 
 

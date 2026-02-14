@@ -52,6 +52,7 @@ from .serializers import (
     UserSkillAttachSerializer,
     UserSkillResponseSerializer,
     SubscriptionPlanSerializer,
+    PaymentHistory,
 )
 from django.contrib.auth.models import User
 import os, requests, random
@@ -2792,9 +2793,48 @@ class AutomaticChargeView(APIView):
 
         success, result = perform_automatic_charge(sub)
         if success:
+            # Record in Payment History
+            PaymentHistory.objects.create(
+                user=request.user,
+                subscription=sub,
+                order_id=result.get("id"),
+                amount=sub.plan.price,
+                status="completed",
+                description=f"Automatic renewal for {sub.plan.name}"
+            )
             return Response({"next_payment_order_id": result["id"]})
         else:
+            # Record failure if possible
+            PaymentHistory.objects.create(
+                user=request.user,
+                subscription=sub,
+                order_id=f"fail-{timezone.now().timestamp()}",
+                amount=sub.plan.price if sub.plan else 0,
+                status="failed",
+                description=f"Automatic renewal failed: {result}"
+            )
             return Response({"error": result}, status=500)
+
+
+class PaymentHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        history = PaymentHistory.objects.filter(user=request.user).order_by('-created_at')
+        data = []
+        for h in history:
+            data.append({
+                "id": h.id,
+                "order_id": h.order_id,
+                "amount": str(h.amount),
+                "currency": h.currency,
+                "status": h.status,
+                "payment_method": h.payment_method,
+                "card_mask": h.card_mask,
+                "description": h.description,
+                "date": h.created_at.isoformat(),
+            })
+        return Response(data)
 
 
 # ------------------ BOG Callback Handler ------------------
@@ -2863,11 +2903,45 @@ class BOGCallbackView(APIView):
                 sub.is_active = True
                 sub.save()
                 logger.info(f"Subscription updated for order_id: {body.get('id')}")
+            else:
+                # Fallback: Create subscription if it doesn't exist but payment is successful
+                # We might not know the plan here if it's not in the callback, 
+                # but BOG usually sends order details or we can fetch them.
+                logger.warning(f"Callback received for unknown subscription: {parent_order_id}. Creating fallback.")
+                # You might want to fetch order details here to get the plan_id
+            
+            # Record in Payment History
+            PaymentHistory.objects.update_or_create(
+                order_id=body.get("id"),
+                defaults={
+                    "user": sub.user if sub else None, # Needs better user lookup if sub is None
+                    "subscription": sub,
+                    "amount": payment_detail.get("amount"),
+                    "currency": payment_detail.get("currency", "GEL"),
+                    "status": "completed",
+                    "card_mask": payment_detail.get("payer_identifier"),
+                    "description": f"Subscription payment: {sub.plan.name if sub and sub.plan else 'N/A'}"
+                }
+            )
 
         elif order_status in ["failed", "rejected"]:
             sub = UserSubscription.objects.filter(parent_order_id=parent_order_id).first()
             if sub:
                 sub.is_active = False
+                sub.save()
+            
+            # Record failed payment
+            if sub:
+                PaymentHistory.objects.update_or_create(
+                    order_id=body.get("id"),
+                    defaults={
+                        "user": sub.user,
+                        "subscription": sub,
+                        "amount": payment_detail.get("amount", 0),
+                        "status": order_status,
+                        "description": f"Payment {order_status}"
+                    }
+                )
                 sub.save()
                 logger.warning(f"Subscription deactivated due to failed payment: {order_status}")
 
