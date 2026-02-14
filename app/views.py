@@ -2590,7 +2590,7 @@ class CreateOrderView(APIView):
                     }
                 ]
             },
-            "intent": "ANY",
+            "intent": "RECURRING",
             "redirect_urls": {
                 "success": f"https://dashboard.breneo.app/success?plan_id={plan.id}",
                 "fail": "https://dashboard.breneo.app/fail",
@@ -2642,15 +2642,21 @@ class SaveCardView(APIView):
             except SubscriptionPlan.DoesNotExist:
                 return Response({"error": "Invalid subscription plan"}, status=404)
 
+        # Clean string ID (remove quotes/spaces)
+        order_id = str(order_id).strip().replace('"', '').replace("'", "")
+        
+        # Correct BOG Subscription registration URL is typically /orders/{order_id}/subscriptions
         url = f"{settings.BOG_ORDER_URL}/{order_id}/subscriptions"
 
         headers = {
             "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
             "Idempotency-Key": f"save-card-{order_id}"
         }
 
         try:
-            res = requests.put(url, headers=headers)
+            # We must pass an empty JSON body and Content-Type for BOG's PUT endpoint
+            res = requests.put(url, headers=headers, json={})
             res.raise_for_status()
             data = res.json()
         except requests.exceptions.HTTPError as e:
@@ -2811,6 +2817,13 @@ class BOGCallbackView(APIView):
             logger.warning("BOG_CALLBACK_SECRET_PUBLIC_KEY not configured. Skipping verification.")
             return True # Or False, depending on how strict we want to be during setup
 
+        if "-----BEGIN PUBLIC KEY-----" not in public_key_str:
+            # Wrap in PEM headers if missing
+            clean_key = public_key_str.replace(" ", "").replace("\n", "").replace("\r", "")
+            # Split into 64-character lines
+            lines = [clean_key[i:i+64] for i in range(0, len(clean_key), 64)]
+            public_key_str = "-----BEGIN PUBLIC KEY-----\n" + "\n".join(lines) + "\n-----END PUBLIC KEY-----"
+
         try:
             public_key = load_pem_public_key(public_key_str.encode())
             signature = base64.b64decode(signature_b64)
@@ -2870,6 +2883,11 @@ class SubscriptionPlanListView(APIView):
         plans = SubscriptionPlan.objects.filter(is_active=True)
         serializer = SubscriptionPlanSerializer(plans, many=True)
         return Response(serializer.data)
+
+@api_view(["GET", "POST"])
+@permission_classes([]) # No auth for this public check
+def bog_auth_placeholder(request):
+    return Response({"status": "ok"})
 
 
 

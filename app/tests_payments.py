@@ -50,6 +50,10 @@ class BOGPaymentTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['order_id'], 'fake-order-id')
         self.assertEqual(response.json()['redirect_url'], 'https://fake-redirect.url')
+        
+        # Verify post was called with intent: RECURRING
+        args, kwargs = mock_post.call_args
+        self.assertEqual(kwargs['json']['intent'], 'RECURRING')
 
     @override_settings(BOG_CALLBACK_SECRET_PUBLIC_KEY=PUBLIC_KEY_PEM)
     def test_callback_signature_verification_success(self):
@@ -93,6 +97,41 @@ class BOGPaymentTests(TestCase):
             HTTP_CALLBACK_SIGNATURE="invalid-signature"
         )
         self.assertEqual(response.status_code, 401)
+
+    @override_settings(BOG_CALLBACK_SECRET_PUBLIC_KEY="MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA") # Raw B64 mock
+    @patch('app.views.requests.put')
+    @patch('app.views.requests.post')
+    def test_save_card_view(self, mock_post, mock_put):
+        # Mock BOG Token
+        mock_token_res = MagicMock()
+        mock_token_res.status_code = 200
+        mock_token_res.json.return_value = {"access_token": "fake-token"}
+        mock_post.return_value = mock_token_res
+
+        # Mock BOG Save Card response
+        mock_save_res = MagicMock()
+        mock_save_res.status_code = 200
+        mock_save_res.json.return_value = {"parent_order_id": "test-parent-id"}
+        mock_put.return_value = mock_save_res
+
+        # Mock settings for BOG
+        bog_order_url = "https://api.bog.ge/payments/v1/ecommerce/orders"
+        with override_settings(BOG_ORDER_URL=bog_order_url, BOG_TOKEN_URL="https://api.bog.ge/oauth/token"):
+            response = self.client.post(f'/api/bog/save-card/test-order-id/', {"plan_id": self.plan.id})
+            
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify put was called with corrected URL: orders/{order_id}/subscriptions
+        expected_url = f"{bog_order_url}/test-order-id/subscriptions"
+        mock_put.assert_called_once()
+        args, kwargs = mock_put.call_args
+        self.assertEqual(args[0], expected_url)
+        self.assertEqual(kwargs['json'], {})
+
+    def test_bog_auth_placeholder(self):
+        response = self.client.get('/api/payments/bog/auth/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'ok')
 
     @patch('app.views.requests.post')
     def test_perform_automatic_charge(self, mock_post):

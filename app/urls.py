@@ -46,6 +46,7 @@ from .views import (
     AutomaticChargeView,
     BOGCallbackView,
     SubscriptionPlanListView,
+    bog_auth_placeholder,
     PersonalProfileView,
     SocialLinksMeView,
     IndustryProfileView,
@@ -141,6 +142,11 @@ urlpatterns = [
     path("api/bog/subscribe/", AutomaticChargeView.as_view()),
     path("api/bog/callback/", BOGCallbackView.as_view()),
     
+    # Extra paths for compatibility with BOG/Frontend expectations seen in logs
+    path("api/payments/bog/auth/", bog_auth_placeholder, name="bog-auth-placeholder"),
+    path("api/payments/bog/callback/", BOGCallbackView.as_view()),
+    path("api/payments/bog/save-card/<str:order_id>/", SaveCardView.as_view()),
+
     # ----------- Subscription Plans -----------
     path("api/subscription-plans/", SubscriptionPlanListView.as_view()),
     path("api/me/subscription/", UserSubscriptionView.as_view()),
