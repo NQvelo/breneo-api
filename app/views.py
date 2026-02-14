@@ -2670,11 +2670,14 @@ class SaveCardView(APIView):
 
             url = f"{base_url}/{order_id}/{endpoint}"
             logger.info(f"Attempting BOG Save Card: {url}")
+            logger.info(f"Headers: {headers}")
             
             try:
-                # BOG docs show PUT with NO body. 
-                res = requests.put(url, headers=headers)
+                # Some servers require explicit empty dict for JSON content type
+                res = requests.put(url, headers=headers, json={})
                 
+                logger.info(f"BOG Save Card Response ({endpoint}): {res.status_code} - {res.text}")
+
                 if res.status_code in [200, 202]:
                     try:
                         data = res.json()
