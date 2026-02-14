@@ -500,6 +500,8 @@ class UserSubscription(models.Model):
     parent_order_id = models.CharField(max_length=200, null=True, blank=True)
     is_active = models.BooleanField(default=False)
     next_payment_date = models.DateField(null=True, blank=True)
+    card_mask = models.CharField(max_length=20, null=True, blank=True)
+    card_type = models.CharField(max_length=20, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
