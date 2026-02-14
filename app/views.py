@@ -2646,8 +2646,11 @@ class SaveCardView(APIView):
         # Clean string ID (remove quotes/spaces)
         order_id = str(order_id).strip().replace('"', '').replace("'", "")
         
-        # Correct BOG Subscription registration URL is typically /orders/{order_id}/subscriptions
-        url = f"{settings.BOG_ORDER_URL}/{order_id}/subscriptions"
+        # Try multiple possible BOG endpoints: singular 'subscription', plural 'subscriptions', or 'cards'
+        endpoints = ["subscription", "subscriptions", "cards"]
+        last_error_details = ""
+        success = False
+        data = {}
 
         headers = {
             "Authorization": f"Bearer {token}",
@@ -2655,22 +2658,30 @@ class SaveCardView(APIView):
             "Idempotency-Key": f"save-card-{order_id}"
         }
 
-        try:
-            # We must pass an empty JSON body and Content-Type for BOG's PUT endpoint
-            res = requests.put(url, headers=headers, json={})
-            res.raise_for_status()
-            data = res.json()
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"BOG Save Card HTTP Error: {str(e)}")
-            logger.error(f"BOG Response Status: {e.response.status_code}")
-            logger.error(f"BOG Response Body: {e.response.text}")
+        for endpoint in endpoints:
+            url = f"{settings.BOG_ORDER_URL}/{order_id}/{endpoint}"
+            logger.info(f"Attempting to save card via BOG endpoint: {url}")
+            
+            try:
+                # We must pass an empty JSON body and Content-Type for BOG's PUT endpoint
+                res = requests.put(url, headers=headers, json={})
+                if res.status_code == 200:
+                    data = res.json()
+                    success = True
+                    logger.info(f"Successfully saved card using endpoint: {endpoint}")
+                    break
+                else:
+                    logger.warning(f"BOG endpoint '{endpoint}' failed with status {res.status_code}: {res.text}")
+                    last_error_details = res.text
+            except Exception as e:
+                logger.error(f"Error attempting BOG endpoint '{endpoint}': {str(e)}")
+                last_error_details = str(e)
+
+        if not success:
             return Response({
                 "error": "Failed to save card with BOG",
-                "details": e.response.text if hasattr(e, 'response') else str(e)
+                "details": f"All endpoints failed. Last error: {last_error_details}"
             }, status=500)
-        except Exception as e:
-            logger.error(f"BOG Save Card Error: {str(e)}")
-            return Response({"error": "Failed to save card with BOG", "details": str(e)}, status=500)
 
         parent_order_id = data.get("parent_order_id") or order_id
 
