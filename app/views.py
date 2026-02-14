@@ -2655,39 +2655,37 @@ class SaveCardView(APIView):
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-            "Idempotency-Key": f"save-card-{order_id}"
+            # BOG doc says Idempotency-Key should be a UUID v4
+            "Idempotency-Key": f"save-card-{order_id[:32]}" # Ensure it doesn't exceed common header limits or just use first 32 chars
         }
 
         for endpoint in endpoints:
             # BOG Documentation specifies base URL as /payments/v1/orders/ (NO /ecommerce/)
-            # We strip /ecommerce/orders from the settings URL if it's there to get the correct base
             base_url = settings.BOG_ORDER_URL.replace("/ecommerce/orders", "/orders")
-            if base_url.endswith("/orders") is False and "/orders/" not in base_url:
-                 # Fallback if the strip failed
-                 if "api.bog.ge" in base_url:
-                     base_url = "https://api.bog.ge/payments/v1/orders"
+            if "api.bog.ge" in base_url and "/orders" not in base_url:
+                 base_url = "https://api.bog.ge/payments/v1/orders"
 
             url = f"{base_url}/{order_id}/{endpoint}"
-            logger.info(f"Attempting to save card via BOG endpoint: {url}")
+            logger.info(f"Attempting BOG Save Card: {url}")
             
             try:
-                # We must pass an empty JSON body and Content-Type for BOG's PUT endpoint
-                res = requests.put(url, headers=headers, json={})
+                # BOG docs show PUT with NO body. requests.put(url, headers=headers) sends no body.
+                # Previously json={} sent "{}" which BOG might reject.
+                res = requests.put(url, headers=headers)
                 
-                # BOG Docs state 202 ACCEPTED is the success code for these endpoints
                 if res.status_code in [200, 202]:
                     try:
                         data = res.json()
                     except:
-                        data = {} # 202 might have empty body
+                        data = {}
                     success = True
-                    logger.info(f"Successfully saved card using endpoint: {endpoint} (Status: {res.status_code})")
+                    logger.info(f"BOG Save Card Success: {endpoint} ({res.status_code})")
                     break
                 else:
-                    logger.warning(f"BOG endpoint '{endpoint}' failed with status {res.status_code}: {res.text}")
+                    logger.warning(f"BOG Error {res.status_code} ({endpoint}): {res.text}")
                     last_error_details = res.text
             except Exception as e:
-                logger.error(f"Error attempting BOG endpoint '{endpoint}': {str(e)}")
+                logger.error(f"BOG Request failed ({endpoint}): {str(e)}")
                 last_error_details = str(e)
 
         if not success:
@@ -2927,26 +2925,32 @@ class BOGCallbackView(APIView):
                 sub.is_active = True
                 sub.save()
                 logger.info(f"Subscription updated for order_id: {body.get('id')}")
+                
+                # Record in Payment History
+                PaymentHistory.objects.update_or_create(
+                    order_id=body.get("id"),
+                    defaults={
+                        "user": sub.user,
+                        "subscription": sub,
+                        "amount": payment_detail.get("amount"),
+                        "currency": payment_detail.get("currency", "GEL"),
+                        "status": "completed",
+                        "card_mask": payment_detail.get("payer_identifier"),
+                        "description": f"Subscription payment: {sub.plan.name if sub.plan else 'N/A'}"
+                    }
+                )
             else:
-                # Fallback: Create subscription if it doesn't exist but payment is successful
-                # We might not know the plan here if it's not in the callback, 
-                # but BOG usually sends order details or we can fetch them.
-                logger.warning(f"Callback received for unknown subscription: {parent_order_id}. Creating fallback.")
-                # You might want to fetch order details here to get the plan_id
-            
-            # Record in Payment History
-            PaymentHistory.objects.update_or_create(
-                order_id=body.get("id"),
-                defaults={
-                    "user": sub.user if sub else None, # Needs better user lookup if sub is None
-                    "subscription": sub,
-                    "amount": payment_detail.get("amount"),
-                    "currency": payment_detail.get("currency", "GEL"),
-                    "status": "completed",
-                    "card_mask": payment_detail.get("payer_identifier"),
-                    "description": f"Subscription payment: {sub.plan.name if sub and sub.plan else 'N/A'}"
-                }
-            )
+                logger.warning(f"Callback success for unknown parent_order_id: {parent_order_id}")
+                # Record payment history without subscription if possible (might fail if user lookup fails)
+                PaymentHistory.objects.update_or_create(
+                    order_id=body.get("id"),
+                    defaults={
+                        "amount": payment_detail.get("amount"),
+                        "currency": payment_detail.get("currency", "GEL"),
+                        "status": "completed",
+                        "description": f"Completed payment for child order {body.get('id')}"
+                    }
+                )
 
         elif order_status in ["failed", "rejected"]:
             sub = UserSubscription.objects.filter(parent_order_id=parent_order_id).first()
