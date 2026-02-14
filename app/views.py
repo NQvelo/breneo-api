@@ -2659,16 +2659,29 @@ class SaveCardView(APIView):
         }
 
         for endpoint in endpoints:
-            url = f"{settings.BOG_ORDER_URL}/{order_id}/{endpoint}"
+            # BOG Documentation specifies base URL as /payments/v1/orders/ (NO /ecommerce/)
+            # We strip /ecommerce/orders from the settings URL if it's there to get the correct base
+            base_url = settings.BOG_ORDER_URL.replace("/ecommerce/orders", "/orders")
+            if base_url.endswith("/orders") is False and "/orders/" not in base_url:
+                 # Fallback if the strip failed
+                 if "api.bog.ge" in base_url:
+                     base_url = "https://api.bog.ge/payments/v1/orders"
+
+            url = f"{base_url}/{order_id}/{endpoint}"
             logger.info(f"Attempting to save card via BOG endpoint: {url}")
             
             try:
                 # We must pass an empty JSON body and Content-Type for BOG's PUT endpoint
                 res = requests.put(url, headers=headers, json={})
-                if res.status_code == 200:
-                    data = res.json()
+                
+                # BOG Docs state 202 ACCEPTED is the success code for these endpoints
+                if res.status_code in [200, 202]:
+                    try:
+                        data = res.json()
+                    except:
+                        data = {} # 202 might have empty body
                     success = True
-                    logger.info(f"Successfully saved card using endpoint: {endpoint}")
+                    logger.info(f"Successfully saved card using endpoint: {endpoint} (Status: {res.status_code})")
                     break
                 else:
                     logger.warning(f"BOG endpoint '{endpoint}' failed with status {res.status_code}: {res.text}")
