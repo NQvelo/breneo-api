@@ -2622,6 +2622,8 @@ class CreateOrderView(APIView):
 
 
 # ------------------Save Card for Future Payments ------------------
+import json
+import uuid
 from datetime import timedelta
 from .models import UserSubscription
 
@@ -2655,8 +2657,8 @@ class SaveCardView(APIView):
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-            # BOG doc says Idempotency-Key should be a UUID v4
-            "Idempotency-Key": f"save-card-{order_id[:32]}" # Ensure it doesn't exceed common header limits or just use first 32 chars
+            # BOG strictly requires a valid UUID v4 for the Idempotency-Key
+            "Idempotency-Key": str(uuid.uuid4())
         }
 
         for endpoint in endpoints:
