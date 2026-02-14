@@ -30,6 +30,7 @@ from .models import (
     UserIndustryProfile,
     SubscriptionPlan,
     UserSubscription,
+    PaymentHistory,
 )
 from .serializers import (
     QuestionTechSerializer,
@@ -52,7 +53,6 @@ from .serializers import (
     UserSkillAttachSerializer,
     UserSkillResponseSerializer,
     SubscriptionPlanSerializer,
-    PaymentHistory,
 )
 from django.contrib.auth.models import User
 import os, requests, random
