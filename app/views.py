@@ -2648,37 +2648,40 @@ class SaveCardView(APIView):
         # Clean string ID (remove quotes/spaces)
         order_id = str(order_id).strip().replace('"', '').replace("'", "")
         
-        # Try multiple possible BOG endpoints: singular 'subscription', plural 'subscriptions', or 'cards'
-        endpoints = ["subscription", "subscriptions", "cards"]
+        # Try BOG endpoints for saving card
+        # 1. First try /cards endpoint (Standard Save Card)
+        # 2. Then try /subscription endpoint (Recurring Payment Activation)
+        endpoints = ["cards", "subscription"] 
         last_error_details = ""
         success = False
         data = {}
 
+        # Base URL construction - ensure strict /payments/v1/orders/ structure
+        base_url = settings.BOG_ORDER_URL.replace("/ecommerce/orders", "/orders")
+        if "api.bog.ge" in base_url and "/orders" not in base_url:
+                base_url = "https://api.bog.ge/payments/v1/orders"
+
         for endpoint in endpoints:
-            # BOG strictly requires a valid UUID v4 for the Idempotency-Key
-            # Each separate request must have a UNIQUE key. 
+            # Each request needs a unique Idempotency-Key
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json",
                 "Idempotency-Key": str(uuid.uuid4())
             }
 
-            # BOG Documentation specifies base URL as /payments/v1/orders/ (NO /ecommerce/)
-            base_url = settings.BOG_ORDER_URL.replace("/ecommerce/orders", "/orders")
-            if "api.bog.ge" in base_url and "/orders" not in base_url:
-                 base_url = "https://api.bog.ge/payments/v1/orders"
-
             url = f"{base_url}/{order_id}/{endpoint}"
             logger.info(f"Attempting BOG Save Card: {url}")
             logger.info(f"Headers: {headers}")
             
             try:
-                # Some servers require explicit empty dict for JSON content type
+                # BOG docs show PUT with NO body. 
+                # However, for 'cards' endpoint specifically, we might need a body or different method if PUT fails.
+                # We stick to PUT with empty JSON as per recent testing.
                 res = requests.put(url, headers=headers, json={})
                 
                 logger.info(f"BOG Save Card Response ({endpoint}): {res.status_code} - {res.text}")
 
-                if res.status_code in [200, 202]:
+                if res.status_code in [200, 202, 201]:
                     try:
                         data = res.json()
                     except:
@@ -2689,6 +2692,9 @@ class SaveCardView(APIView):
                 else:
                     logger.warning(f"BOG Error {res.status_code} ({endpoint}): {res.text}")
                     last_error_details = res.text
+                    
+                    # If /cards fails with 400 or 404, we continue to try /subscription
+                    # which is specifically for recurring payments.
             except Exception as e:
                 logger.error(f"BOG Request failed ({endpoint}): {str(e)}")
                 last_error_details = str(e)
