@@ -28,6 +28,8 @@ from .models import (
     Education,
     WorkExperience,
     UserIndustryProfile,
+    SubscriptionPlan,
+    UserSubscription,
 )
 from .serializers import (
     QuestionTechSerializer,
@@ -49,6 +51,7 @@ from .serializers import (
     SkillSearchSerializer,
     UserSkillAttachSerializer,
     UserSkillResponseSerializer,
+    SubscriptionPlanSerializer,
 )
 from django.contrib.auth.models import User
 import os, requests, random
@@ -2550,6 +2553,20 @@ class CreateOrderView(APIView):
         if not token:
             return Response({"error": "Token error"}, status=400)
 
+        # Get plan_id from request
+        plan_id = request.data.get("plan_id")
+        
+        if not plan_id:
+            return Response({"error": "plan_id is required"}, status=400)
+        
+        # Fetch the subscription plan
+        try:
+            plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+        except SubscriptionPlan.DoesNotExist:
+            return Response({"error": "Invalid or inactive subscription plan"}, status=404)
+        
+        amount = float(plan.price)
+
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
@@ -2564,17 +2581,17 @@ class CreateOrderView(APIView):
             "external_order_id": f"user-{request.user.id}-{int(time.time())}",
             "purchase_units": {
                 "currency": "GEL",
-                "total_amount": 10,
+                "total_amount": amount,
                 "basket": [
                     {
                         "quantity": 1,
-                        "unit_price": 10,
-                        "product_id": "monthly_subscription"
+                        "unit_price": amount,
+                        "product_id": f"subscription_plan_{plan.id}"
                     }
                 ]
             },
             "redirect_urls": {
-                "success": "https://dashboard.breneo.app/success",
+                "success": f"https://dashboard.breneo.app/success?plan_id={plan.id}",
                 "fail": "https://dashboard.breneo.app/fail",
             }
         }
@@ -2614,6 +2631,16 @@ class SaveCardView(APIView):
         if not token:
             return Response({"error": "Token error"}, status=400)
 
+        # Get plan_id from request
+        plan_id = request.data.get("plan_id")
+        plan = None
+        
+        if plan_id:
+            try:
+                plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+            except SubscriptionPlan.DoesNotExist:
+                return Response({"error": "Invalid subscription plan"}, status=404)
+
         url = f"{settings.BOG_ORDER_URL}/{order_id}/cards"
 
         headers = {"Authorization": f"Bearer {token}"}
@@ -2630,17 +2657,19 @@ class SaveCardView(APIView):
         if not parent_order_id:
             return Response({"error": "No parent_order_id returned"}, status=400)
 
-        # Save subscription info
+        # Save subscription info with plan
         UserSubscription.objects.update_or_create(
             user=request.user,
             defaults={
                 "parent_order_id": parent_order_id,
+                "plan": plan,
                 "is_active": True,
                 "next_payment_date": timezone.now().date() + timedelta(days=30)
             }
         )
 
         return Response({"message": "Card saved", "parent_order_id": parent_order_id})
+
 
 
 
@@ -2655,6 +2684,12 @@ def perform_automatic_charge(subscription):
     if not token:
         return False, "Token error"
 
+    # Get the subscription plan price
+    if not subscription.plan:
+        return False, "No subscription plan associated with this subscription"
+    
+    amount = float(subscription.plan.price)
+
     url = f"{settings.BOG_ORDER_URL}/{subscription.parent_order_id}"
 
     headers = {
@@ -2667,12 +2702,12 @@ def perform_automatic_charge(subscription):
     payload = {
         "callback_url": callback_url,
         "purchase_units": {
-            "total_amount": 10,
+            "total_amount": amount,
             "basket": [
                 {
                     "quantity": 1,
-                    "unit_price": 10,
-                    "product_id": "monthly_subscription"
+                    "unit_price": amount,
+                    "product_id": f"subscription_plan_{subscription.plan.id}"
                 }
             ]
         }
@@ -2771,5 +2806,17 @@ class BOGCallbackView(APIView):
                 logger.warning(f"Subscription deactivated due to failed payment: {order_status}")
 
         return Response({"status": "ok"})
+
+
+# ==================== Subscription Plans ====================
+
+class SubscriptionPlanListView(APIView):
+    """List all active subscription plans"""
+    
+    def get(self, request):
+        plans = SubscriptionPlan.objects.filter(is_active=True)
+        serializer = SubscriptionPlanSerializer(plans, many=True)
+        return Response(serializer.data)
+
 
 

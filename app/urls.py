@@ -45,6 +45,7 @@ from .views import (
     SaveCardView,
     AutomaticChargeView,
     BOGCallbackView,
+    SubscriptionPlanListView,
     PersonalProfileView,
     SocialLinksMeView,
     IndustryProfileView,
@@ -138,6 +139,9 @@ urlpatterns = [
     path("api/bog/save-card/<str:order_id>/", SaveCardView.as_view()),
     path("api/bog/subscribe/", AutomaticChargeView.as_view()),
     path("api/bog/callback/", BOGCallbackView.as_view()),
+    
+    # ----------- Subscription Plans -----------
+    path("api/subscription-plans/", SubscriptionPlanListView.as_view()),
 ] 
 
 

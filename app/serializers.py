@@ -20,6 +20,7 @@ from .models import (
     WorkExperience,
     Skill,
     UserSkill,
+    SubscriptionPlan,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
@@ -685,3 +686,12 @@ class SavedCourseSerializer(serializers.ModelSerializer):
             course_id=course_id,
             **validated_data
         )
+
+
+#---------------- Subscription Plans ----------------
+
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlan
+        fields = ["id", "name", "price", "duration_days", "description"]
+

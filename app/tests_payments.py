@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from rest_framework.test import APIClient
-from app.models import UserSubscription
+from app.models import UserSubscription, SubscriptionPlan
 
 # Generate a temporary RSA key pair for testing
 PRIVATE_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -21,6 +21,12 @@ class BOGPaymentTests(TestCase):
         self.user = User.objects.create_user(username="testuser", email="test@example.com", password="password123")
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
+        self.plan = SubscriptionPlan.objects.create(
+            name="Test Plan",
+            price="0.10",
+            duration_days=30,
+            is_active=True
+        )
 
     @override_settings(BOG_CALLBACK_SECRET_PUBLIC_KEY=PUBLIC_KEY_PEM)
     @patch('app.views.requests.post')
@@ -39,7 +45,7 @@ class BOGPaymentTests(TestCase):
 
         # Mock settings for BOG
         with override_settings(BOG_ORDER_URL="https://api.bog.ge/v1/orders", BOG_TOKEN_URL="https://api.bog.ge/oauth/token"):
-            response = self.client.post('/api/bog/create-order/', {})
+            response = self.client.post('/api/bog/create-order/', {"plan_id": self.plan.id})
             
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['order_id'], 'fake-order-id')
@@ -91,7 +97,7 @@ class BOGPaymentTests(TestCase):
     @patch('app.views.requests.post')
     def test_perform_automatic_charge(self, mock_post):
         from app.views import perform_automatic_charge
-        sub = UserSubscription.objects.create(user=self.user, parent_order_id="test-parent-id", is_active=True)
+        sub = UserSubscription.objects.create(user=self.user, parent_order_id="test-parent-id", is_active=True, plan=self.plan)
         
         mock_response = MagicMock()
         mock_response.status_code = 200

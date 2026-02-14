@@ -34,6 +34,7 @@ from .models import (
     WorkExperience,
     UserIndustryProfile,
     UserSubscription,
+    SubscriptionPlan,
 )
 
 
@@ -407,3 +408,11 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
     list_display = ("user", "is_active", "next_payment_date", "parent_order_id")
     list_filter = ("is_active", "next_payment_date")
     search_fields = ("user__email", "parent_order_id")
+
+
+@admin.register(SubscriptionPlan)
+class SubscriptionPlanAdmin(admin.ModelAdmin):
+    list_display = ("name", "price", "duration_days", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "description")
+    ordering = ("price",)
