@@ -2924,18 +2924,44 @@ class BOGCallbackView(APIView):
         payment_detail = body.get("payment_detail", {})
         parent_order_id = payment_detail.get("parent_order_id")
 
-        if not parent_order_id:
-            # Might be a one-time payment or missing detail
-            logger.info("BOG Callback: No parent_order_id, skipping subscription update.")
-            return Response({"status": "ignored"})
-
-        if order_status == "completed":
+        # Try to find subscription by parent_order_id (Recurring)
+        sub = None
+        if parent_order_id:
             sub = UserSubscription.objects.filter(parent_order_id=parent_order_id).first()
-            if sub:
-                sub.next_payment_date = timezone.now().date() + timedelta(days=30)
-                sub.is_active = True
-                sub.save()
-                logger.info(f"Subscription updated for order_id: {body.get('id')}")
+
+        # If not found by parent_order_id, it might be the INITIAL payment
+        # In this case, we need to find the user via external_order_id and CREATE/LINK the subscription
+        if not sub:
+             external_order_id = body.get("external_order_id")
+             # external_order_id format: user-{user_id}-{timestamp}
+             if external_order_id and "user-" in external_order_id:
+                try:
+                    parts = external_order_id.split("-")
+                    if len(parts) >= 2:
+                        user_id = parts[1]
+                        user = User.objects.get(id=user_id)
+                        
+                        # Find the user's subscription (it should exist from SaveCardView/CreateOrder, 
+                        # but might not have the parent_order_id set yet if this is the very first callback)
+                        sub = UserSubscription.objects.filter(user=user).first()
+                        
+                        if sub:
+                            # LINK the subscription to this payment's parent_order_id
+                            # This is critical for future recurring payments
+                            # The 'order_id' of this first successful payment BECOMES the 'parent_order_id' for future
+                            actual_order_id = body.get("id")
+                            if actual_order_id:
+                                sub.parent_order_id = actual_order_id
+                                sub.save()
+                                logger.info(f"Linked initial subscription parent_order_id: {sub.parent_order_id}")
+                except Exception as e:
+                    logger.error(f"Failed to link initial subscription: {str(e)}")
+
+        if order_status == "completed" and sub:
+            sub.next_payment_date = timezone.now().date() + timedelta(days=30)
+            sub.is_active = True
+            sub.save()
+            logger.info(f"Subscription activated for order_id: {body.get('id')}")
                 
                 # Use the already extracted payment_detail
                 card_mask = payment_detail.get("payer_identifier") # e.g. 1234****5678
