@@ -2937,6 +2937,25 @@ class BOGCallbackView(APIView):
                 sub.save()
                 logger.info(f"Subscription updated for order_id: {body.get('id')}")
                 
+                # Use the already extracted payment_detail
+                card_mask = payment_detail.get("payer_identifier") # e.g. 1234****5678
+                card_type = payment_detail.get("card_type")
+
+                # Update subscription with card details if available
+                if sub and (card_mask or card_type):
+                    if card_mask:
+                         # Extract last 4 digits if it's a full mask
+                         if "***" in card_mask:
+                             sub.card_mask = card_mask[-4:]
+                         else:
+                             sub.card_mask = card_mask
+                    
+                    if card_type:
+                        sub.card_type = card_type
+                    
+                    sub.save()
+                    logger.info(f"Updated subscription card details: {sub.card_type} {sub.card_mask}")
+
                 # Record in Payment History
                 PaymentHistory.objects.update_or_create(
                     order_id=body.get("id"),
