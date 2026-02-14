@@ -2642,7 +2642,7 @@ class SaveCardView(APIView):
             except SubscriptionPlan.DoesNotExist:
                 return Response({"error": "Invalid subscription plan"}, status=404)
 
-        url = f"{settings.BOG_ORDER_URL}/{order_id}/cards"
+        url = f"{settings.BOG_ORDER_URL}/{order_id}/subscriptions"
 
         headers = {
             "Authorization": f"Bearer {token}",
@@ -2665,11 +2665,12 @@ class SaveCardView(APIView):
             logger.error(f"BOG Save Card Error: {str(e)}")
             return Response({"error": "Failed to save card with BOG", "details": str(e)}, status=500)
 
-        parent_order_id = data.get("parent_order_id")
+        parent_order_id = data.get("parent_order_id") or order_id
+
         if not parent_order_id:
             return Response({"error": "No parent_order_id returned"}, status=400)
 
-        # Save subscription info with plan
+        # Save subscription info with plan (no local card data storage)
         UserSubscription.objects.update_or_create(
             user=request.user,
             defaults={
@@ -2680,7 +2681,45 @@ class SaveCardView(APIView):
             }
         )
 
-        return Response({"message": "Card saved", "parent_order_id": parent_order_id})
+        return Response({
+            "message": "Card saved for automatic payments", 
+            "parent_order_id": parent_order_id
+        })
+
+class UserSubscriptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        sub = UserSubscription.objects.filter(user=request.user, is_active=True).first()
+        if not sub:
+            return Response({"is_active": False})
+        
+        # Fetch card details on-demand from BOG
+        token = get_bog_token()
+        card_mask = "N/A"
+        card_type = "Card"
+        
+        if token and sub.parent_order_id:
+            try:
+                # GET /payments/v1/orders/{order_id}
+                res = requests.get(f"{settings.BOG_ORDER_URL}/{sub.parent_order_id}", headers={
+                    "Authorization": f"Bearer {token}"
+                })
+                if res.status_code == 200:
+                    data = res.json()
+                    detail = data.get("payment_detail", {})
+                    card_mask = detail.get("payer_identifier", "N/A")
+                    card_type = detail.get("card_type", "Card")
+            except Exception as e:
+                logger.error(f"Error fetching card details from BOG: {str(e)}")
+
+        return Response({
+            "is_active": sub.is_active,
+            "plan_name": sub.plan.name if sub.plan else "N/A",
+            "next_payment_date": sub.next_payment_date,
+            "card_mask": card_mask,
+            "card_type": card_type,
+        })
 
 
 
@@ -2702,7 +2741,9 @@ def perform_automatic_charge(subscription):
     
     amount = float(subscription.plan.price)
 
-    url = f"{settings.BOG_ORDER_URL}/{subscription.parent_order_id}"
+    # BOG Offline Charge Endpoint: POST /ecommerce/orders/{parent_order_id}/subscribe
+    base_url = settings.BOG_ORDER_URL.replace("/orders", "/ecommerce/orders")
+    url = f"{base_url}/{subscription.parent_order_id}/subscribe"
 
     headers = {
         "Authorization": f"Bearer {token}",

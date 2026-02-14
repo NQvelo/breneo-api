@@ -54,6 +54,7 @@ from .views import (
     SkillSearchAPIView,
     UserSkillListAttachView,
     UserSkillDetachView,
+    UserSubscriptionView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -142,6 +143,7 @@ urlpatterns = [
     
     # ----------- Subscription Plans -----------
     path("api/subscription-plans/", SubscriptionPlanListView.as_view()),
+    path("api/me/subscription/", UserSubscriptionView.as_view()),
 ] 
 
 
