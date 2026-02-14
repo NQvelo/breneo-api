@@ -2654,14 +2654,15 @@ class SaveCardView(APIView):
         success = False
         data = {}
 
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            # BOG strictly requires a valid UUID v4 for the Idempotency-Key
-            "Idempotency-Key": str(uuid.uuid4())
-        }
-
         for endpoint in endpoints:
+            # BOG strictly requires a valid UUID v4 for the Idempotency-Key
+            # Each separate request must have a UNIQUE key. 
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "Idempotency-Key": str(uuid.uuid4())
+            }
+
             # BOG Documentation specifies base URL as /payments/v1/orders/ (NO /ecommerce/)
             base_url = settings.BOG_ORDER_URL.replace("/ecommerce/orders", "/orders")
             if "api.bog.ge" in base_url and "/orders" not in base_url:
@@ -2671,8 +2672,7 @@ class SaveCardView(APIView):
             logger.info(f"Attempting BOG Save Card: {url}")
             
             try:
-                # BOG docs show PUT with NO body. requests.put(url, headers=headers) sends no body.
-                # Previously json={} sent "{}" which BOG might reject.
+                # BOG docs show PUT with NO body. 
                 res = requests.put(url, headers=headers)
                 
                 if res.status_code in [200, 202]:
