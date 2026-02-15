@@ -105,12 +105,6 @@ def is_i_dont_know(answer):
     return normalized in ("idontknow", "i_dont_know", "dontknow")
 
 
-def add_i_dont_know_option(question_dict):
-    """Add 'I don't know' as option5 to a question dict. Modifies in place, returns same dict."""
-    question_dict["option5"] = I_DONT_KNOW
-    return question_dict
-
-
 # ---------------- Email Helper ----------------
 import logging
 logger = logging.getLogger(__name__)
@@ -410,10 +404,7 @@ class DynamictestquestionsAPI(APIView):
         questions = list(DynamicTechQuestion.objects.filter(isactive=True))
         random.shuffle(questions)
         serializer = QuestionTechSerializer(questions, many=True)
-        data = serializer.data
-        for q in data:
-            q["option5"] = I_DONT_KNOW
-        return Response(data)
+        return Response(serializer.data)
     
 
 class DynamicSoftSkillsquestionsAPI(APIView):
@@ -424,10 +415,7 @@ class DynamicSoftSkillsquestionsAPI(APIView):
         questions = list(DynamicSoftSkillsQuestion.objects.filter(isactive=True))
         random.shuffle(questions)
         serializer = QuestionSoftSkillsSerializer(questions, many=True)
-        data = serializer.data
-        for q in data:
-            q["option5"] = I_DONT_KNOW
-        return Response(data)
+        return Response(serializer.data)
 
 
 
@@ -492,12 +480,12 @@ class StartAssessmentAPI(APIView):
                 "option2": q.option2,
                 "option3": q.option3,
                 "option4": q.option4,
+                "option5": getattr(q, "option5", I_DONT_KNOW),
                 "correct_option": q.correct_option,
                 "skill": q.skill.strip(),
                 "difficulty": q.difficulty,
                 "RoleMapping": q.RoleMapping
             }
-            add_i_dont_know_option(qdict)
             questions_data.append(qdict)
 
         session = AssessmentSession.objects.create(
@@ -627,12 +615,12 @@ class SubmitAnswerAPI(APIView):
                     "option2": nq.option2,
                     "option3": nq.option3,
                     "option4": nq.option4,
+                    "option5": getattr(nq, "option5", I_DONT_KNOW),
                     "correct_option": nq.correct_option,
                     "skill": nq.skill.strip(),
                     "difficulty": nq.difficulty,
                     "RoleMapping": nq.RoleMapping,
                 }
-                add_i_dont_know_option(next_question)
                 session.questions.append(next_question)
 
             session.current_question_index += 1
@@ -870,13 +858,13 @@ class StartSoftAssessmentAPI(APIView):
                     "option2": q.option2,
                     "option3": q.option3,
                     "option4": q.option4,
+                    "option5": getattr(q, "option5", I_DONT_KNOW),
                     "correct_option": q.correct_option,
                     "skill": q.skill.strip(),
                     "difficulty": q.difficulty,
                     "RoleMapping": q.RoleMapping,
                     "type": "soft"
                 }
-                add_i_dont_know_option(qdict)
                 questions_data.append(qdict)
 
             session = AssessmentSession.objects.create(
