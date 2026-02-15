@@ -20,7 +20,7 @@ from django.db import transaction
 from app.models import Profession, Skill, Course, Job
 
 
-# Professions and their related skills (based on role_mapping in views.py)
+# Real professions only (job titles). Excludes soft/behavioral roles like Team Player, Problem Solver, etc.
 PROFESSION_SKILLS = {
     "Frontend Developer": ["React", "Vue", "Angular", "JavaScript", "TypeScript", "UI/UX"],
     "Backend Developer": ["Python", "Django", "Flask", "Node.js", "Express.js"],
@@ -34,14 +34,19 @@ PROFESSION_SKILLS = {
     "Content Creator": ["Content Creator", "Video Editor", "Copywriter"],
     "Data Analyst": ["SQL", "MongoDB", "Data Analyst", "Python"],
     "DevOps Engineer": ["DevOps", "AWS", "Docker", "Kubernetes"],
-    "Team Player": ["Communication", "Teamwork"],
-    "Problem Solver": ["Adaptability"],
-    "Efficient Planner": ["Task Management", "Time Management"],
-    "Organized Worker": ["Time Management"],
-    "Leader / Manager": ["Leadership"],
-    "Project Manager": ["Project Management"],
-    "Curious Learner": ["Learning ability", "Adaptability & Learning"],
-    "Proactive Learner": ["Adaptability & Learning"],
+    "Project Manager": ["Project Management", "Leadership", "Task Management"],
+}
+
+# Titles to remove from Profession table (not real job titles)
+NON_PROFESSION_TITLES = {
+    "Team Player",
+    "Problem Solver",
+    "Efficient Planner",
+    "Organized Worker",
+    "Leader / Manager",
+    "Curious Learner",
+    "Proactive Learner",
+    "Unknown Job",
 }
 
 
@@ -129,9 +134,17 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         skip_groq = options["skip_groq"]
 
-        # Collect profession titles from Job + our mapping
-        titles = set(Job.objects.values_list("title", flat=True))
-        titles.update(PROFESSION_SKILLS.keys())
+        # Remove non-profession entries (soft/behavioral roles, Unknown Job, etc.)
+        to_remove = Profession.objects.filter(title__in=NON_PROFESSION_TITLES)
+        removed_count = to_remove.count()
+        if not dry_run and removed_count:
+            to_remove.delete()
+            self.stdout.write(self.style.WARNING(f"Removed {removed_count} non-profession(s): {list(NON_PROFESSION_TITLES)}"))
+        elif dry_run and removed_count:
+            self.stdout.write(self.style.WARNING(f"[DRY RUN] Would remove {removed_count} non-profession(s)"))
+
+        # Only create/update real professions from our mapping (not every Job title)
+        titles = set(PROFESSION_SKILLS.keys())
 
         for title in sorted(titles):
             self.stdout.write(f"Processing: {title}")

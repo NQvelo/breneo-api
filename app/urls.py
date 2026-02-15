@@ -14,6 +14,7 @@ from .views import (
     FinishAssessmentAPI,
     CareerCategoryListAPIView,
     ProfessionListAPIView,
+    MyProfessionAssignmentsAPIView,
     RandomCareerQuestionsAPI,
     DynamicSoftSkillsquestionsAPI,
     StartSoftAssessmentAPI,
@@ -76,6 +77,7 @@ urlpatterns = [
     path("api/finish-assessment-simple/", finish_assessment, name="finish-assessment-simple"),
     path('api/career-categories/', CareerCategoryListAPIView.as_view(), name='career-categories'),
     path('api/professions/', ProfessionListAPIView.as_view(), name='professions-list'),
+    path('api/me/profession/', MyProfessionAssignmentsAPIView.as_view(), name='me-profession'),
     path("api/career-questions-random/", RandomCareerQuestionsAPI.as_view(), name="career-questions-random"),
 
     # ---------------- Soft Skills Assessment ----------------

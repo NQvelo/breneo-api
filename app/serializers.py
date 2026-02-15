@@ -8,6 +8,7 @@ from .models import (
     CareerOption,
     DynamicSoftSkillsQuestion,
     Profession,
+    ProfessionOfUser,
     SkillTestResult,
     TemporaryAcademy,
     SocialLinks,
@@ -125,6 +126,7 @@ class QuestionSoftSkillsSerializer(serializers.ModelSerializer):
 
 
 class ProfessionSerializer(serializers.ModelSerializer):
+    """Full profession info: title, description, skills, salary_info, market_popularity, relevant_courses."""
     skills = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     relevant_courses = serializers.SlugRelatedField(many=True, read_only=True, slug_field="title")
 
@@ -139,7 +141,16 @@ class ProfessionSerializer(serializers.ModelSerializer):
             "market_popularity",
             "relevant_courses",
             "created_at",
+            "updated_at",
         ]
+
+
+class ProfessionOfUserSerializer(serializers.ModelSerializer):
+    profession = ProfessionSerializer(read_only=True)
+
+    class Meta:
+        model = ProfessionOfUser
+        fields = ["id", "profession", "match_score", "created_at"]
 
 
 class SkillTestResultSerializer(serializers.ModelSerializer):

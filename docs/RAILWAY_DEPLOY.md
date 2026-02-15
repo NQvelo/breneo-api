@@ -24,6 +24,7 @@ The usual cause is **database not set up** or **migrations not run**.
 The **Procfile** runs on each deploy:
 
 - `python manage.py migrate --noinput` – create/update tables (required for admin login/sessions).
+- `python manage.py fetch_profession_data --skip-groq` – populate **Profession** table (salaries by US, Germany, Georgia, Turkey, UK, Other; market popularity; links skills and courses).
 - `python manage.py collectstatic --noinput` – gather admin static files.
 - Then starts **gunicorn**.
 
@@ -117,6 +118,16 @@ Set at least:
 - **`CSRF_TRUSTED_ORIGINS`** – optional; add `https://your-custom-domain.com` if you use one.
 
 Add any other vars your app needs (Cloudinary, Resend, etc.) in the Railway service **Variables** tab.
+
+### 4b. Professions table on Railway
+
+The **Profession** table is filled automatically on each deploy by `fetch_profession_data --skip-groq` in the Procfile. No extra step is required.
+
+To refresh professions with **AI-generated descriptions and salaries** (needs `GROQ_API_KEY` in Railway Variables), run once in Railway **Shell**:
+```bash
+python manage.py fetch_profession_data
+```
+This uses Groq to fetch description, salary ranges (US, Germany, Georgia, Turkey, UK, Other), and market popularity per profession.
 
 ### 5. If you still get 500
 

@@ -118,6 +118,40 @@ class Profession(models.Model):
         return self.title
 
 
+class ProfessionOfUser(models.Model):
+    """
+    Assigns a user to a matched profession based on SkillScore (only skills with score > 0).
+    match_score = percentage of the profession's skills that the user has with score > 0.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profession_assignments",
+    )
+    profession = models.ForeignKey(
+        Profession,
+        on_delete=models.CASCADE,
+        related_name="user_assignments",
+    )
+    match_score = models.FloatField(
+        default=0.0,
+        help_text="Percentage (0-100) of profession skills the user has with SkillScore > 0",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "profession"],
+                name="unique_user_profession",
+            )
+        ]
+        ordering = ["-match_score"]
+
+    def __str__(self):
+        return f"{self.user.username} → {self.profession.title} ({self.match_score:.1f}%)"
+
+
 class Course(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
     academy = models.ForeignKey(

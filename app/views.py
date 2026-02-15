@@ -10,6 +10,7 @@ from .models import (
     UserSkill,
     Job,
     Profession,
+    ProfessionOfUser,
     Course,
     DynamicTechQuestion,
     Skill,
@@ -37,6 +38,7 @@ from .serializers import (
     QuestionTechSerializer,
     CareerCategorySerializer,
     ProfessionSerializer,
+    ProfessionOfUserSerializer,
     QuestionSoftSkillsSerializer,
     CustomTokenObtainPairSerializer,
     SkillTestResultSerializer,
@@ -435,6 +437,26 @@ class ProfessionListAPIView(generics.ListAPIView):
     serializer_class = ProfessionSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+
+class MyProfessionAssignmentsAPIView(generics.ListAPIView):
+    """
+    GET /api/me/profession/ — current user's matched professions with full profession details.
+    Requires auth. Each item includes: profession (id, title, description, skills, salary_info,
+    market_popularity, relevant_courses, created_at, updated_at), match_score, created_at.
+    Ordered by match_score descending.
+    """
+    serializer_class = ProfessionOfUserSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            ProfessionOfUser.objects.filter(user=self.request.user)
+            .select_related("profession")
+            .prefetch_related("profession__skills", "profession__relevant_courses")
+            .order_by("-match_score")
+        )
 
 # ---------------- AI Next Question Helper ----------------
 def get_next_question_domain(answers, previous_domain):

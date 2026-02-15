@@ -16,6 +16,7 @@ from .models import (
     Badge,
     Job,
     Profession,
+    ProfessionOfUser,
     Skill,
     UserSkill,
     Course,
@@ -262,6 +263,15 @@ class ProfessionAdmin(admin.ModelAdmin):
     search_fields = ("title", "description")
     filter_horizontal = ("skills", "relevant_courses")
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(ProfessionOfUser)
+class ProfessionOfUserAdmin(admin.ModelAdmin):
+    list_display = ("user", "profession", "match_score", "created_at")
+    list_filter = ("profession",)
+    search_fields = ("user__username", "user__email", "profession__title")
+    ordering = ("-match_score",)
+    readonly_fields = ("created_at",)
 
 
 @admin.register(SkillScore)
