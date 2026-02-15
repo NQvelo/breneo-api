@@ -9,6 +9,7 @@ from .models import (
     AssessmentSession,
     UserSkill,
     Job,
+    Profession,
     Course,
     DynamicTechQuestion,
     Skill,
@@ -35,6 +36,7 @@ from .models import (
 from .serializers import (
     QuestionTechSerializer,
     CareerCategorySerializer,
+    ProfessionSerializer,
     QuestionSoftSkillsSerializer,
     CustomTokenObtainPairSerializer,
     SkillTestResultSerializer,
@@ -425,6 +427,14 @@ class CareerCategoryListAPIView(generics.ListAPIView):
     queryset = CareerCategory.objects.all()
     serializer_class = CareerCategorySerializer
     authentication_classes = [JWTAuthentication]
+
+
+class ProfessionListAPIView(generics.ListAPIView):
+    """GET /api/professions/ - list all professions with salary, market_popularity (chart data), skills, courses."""
+    queryset = Profession.objects.all().prefetch_related("skills", "relevant_courses")
+    serializer_class = ProfessionSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
 # ---------------- AI Next Question Helper ----------------
 def get_next_question_domain(answers, previous_domain):
@@ -1287,11 +1297,16 @@ def fetch_salary_from_groq(job_title: str, location: str = "global") -> str:
 
 
 # Save skill test results
+THROTTLE_SECONDS = 30  # Ignore duplicate saves within this window
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def save_test_results(request):
     """
     API to save skill test results.
+    - Update instead of create: replaces the user's most recent result (one row per user).
+    - Throttling: ignores requests within 30s with same score/role (avoids double-submit).
     Expects JSON:
     {
         "final_role": "Developer",
@@ -1301,16 +1316,42 @@ def save_test_results(request):
     }
     """
     data = request.data.copy()
-    # ფორმატირება "14 / 25"
     obtained = data.get("obtained_score", 0)
     total = data.get("total_questions", 0)
-    data["total_score"] = f"{obtained} / {total}"
+    total_score = f"{obtained} / {total}"
+    data["total_score"] = total_score
+    final_role = (data.get("final_role") or "").strip()
+    skills_json = data.get("skills_json") or {}
 
     serializer = SkillTestResultSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save(user=request.user)
-        return Response(serializer.data, status=201)
-    return Response(serializer.errors, status=400)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+
+    user = request.user
+    now = timezone.now()
+
+    # Throttling: ignore if same score/role within last 30 seconds
+    last = SkillTestResult.objects.filter(user=user).order_by("-created_at").first()
+    if last:
+        if last.total_score == total_score and last.final_role == final_role:
+            age_seconds = (now - last.created_at).total_seconds()
+            if age_seconds < THROTTLE_SECONDS:
+                return Response(
+                    SkillTestResultSerializer(last).data,
+                    status=200,
+                )
+
+    # Update instead of create: replace most recent result (one row per user)
+    if last:
+        last.final_role = final_role
+        last.total_score = total_score
+        last.skills_json = skills_json
+        last.save()
+        return Response(SkillTestResultSerializer(last).data, status=200)
+
+    # First result for user: create
+    obj = serializer.save(user=user)
+    return Response(serializer.data, status=201)
 # Get logged-in user's skill test results
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

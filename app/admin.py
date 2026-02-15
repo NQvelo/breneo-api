@@ -15,6 +15,7 @@ from .models import (
     AssessmentSession,
     Badge,
     Job,
+    Profession,
     Skill,
     UserSkill,
     Course,
@@ -255,6 +256,14 @@ class DynamicSoftSkillsQuestionAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(Profession)
+class ProfessionAdmin(admin.ModelAdmin):
+    list_display = ("title", "created_at")
+    search_fields = ("title", "description")
+    filter_horizontal = ("skills", "relevant_courses")
+    readonly_fields = ("created_at", "updated_at")
+
+
 @admin.register(SkillScore)
 class SkillScoreAdmin(admin.ModelAdmin):
     list_display = ("user", "skill", "score", "threshold", "created_at")
@@ -269,6 +278,30 @@ class SkillTestResultAdmin(admin.ModelAdmin):
     list_filter = ('final_role', 'created_at')
     readonly_fields = ('created_at',)
     ordering = ('-created_at',)
+    actions = ['remove_duplicate_results', 'remove_all_duplicate_results']
+
+    @admin.action(description="Remove duplicates from selected (keep most recent per user)")
+    def remove_duplicate_results(self, request, queryset):
+        removed = 0
+        user_ids = queryset.values_list("user_id", flat=True).distinct()
+        for user_id in user_ids:
+            results = SkillTestResult.objects.filter(user_id=user_id).order_by("-created_at")
+            to_keep = results.first()
+            if to_keep and results.count() > 1:
+                deleted, _ = results.exclude(pk=to_keep.pk).delete()
+                removed += deleted
+        self.message_user(request, f"Removed {removed} duplicate result(s). Kept most recent per user.")
+
+    @admin.action(description="Remove ALL duplicates (full table cleanup)")
+    def remove_all_duplicate_results(self, request, queryset):
+        removed = 0
+        for user_id in SkillTestResult.objects.values_list("user_id", flat=True).distinct():
+            results = SkillTestResult.objects.filter(user_id=user_id).order_by("-created_at")
+            to_keep = results.first()
+            if to_keep and results.count() > 1:
+                deleted, _ = results.exclude(pk=to_keep.pk).delete()
+                removed += deleted
+        self.message_user(request, f"Removed {removed} duplicate result(s) from entire table.")
 
 class UserProfileAdminForm(forms.ModelForm):
     class Meta:

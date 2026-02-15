@@ -89,6 +89,34 @@ class Job(models.Model):
     required_skills = models.ManyToManyField(Skill, related_name="jobs")
 
 
+class Profession(models.Model):
+    """
+    Career profession based on skills. Populated via fetch_profession_data command.
+    - salary_info: JSON object with salaries by country e.g.
+      {"US": {"min": 70000, "max": 120000, "currency": "USD", "display": "$70,000 - $120,000"},
+       "Germany": {...}, "Georgia": {...}, "Turkey": {...}, "UK": {...}, "Other": {...}}
+    - market_popularity: JSON for charts e.g. [{"year": "2020", "value": 75}, ...]
+    """
+    title = models.CharField(max_length=200, unique=True)
+    description = models.TextField(blank=True, default="")
+    skills = models.ManyToManyField(Skill, related_name="professions", blank=True)
+    salary_info = models.JSONField(
+        default=dict,
+        help_text='Object: US, Germany, Georgia, Turkey, UK, Other -> {min, max, currency, display}'
+    )
+    market_popularity = models.JSONField(
+        default=list,
+        help_text='[{"year": "2020", "value": 75}, {"year": "2021", "value": 80}, ...] for charts'
+    )
+    relevant_courses = models.ManyToManyField(
+        "Course", related_name="professions", blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
 
 class Course(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
