@@ -93,6 +93,24 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
+# ---------------- "I don't know" option ----------------
+I_DONT_KNOW = "I don't know"
+
+
+def is_i_dont_know(answer):
+    """Check if user selected 'I don't know' (various formats accepted)."""
+    if not answer:
+        return False
+    normalized = str(answer).strip().lower().replace("'", "").replace(" ", "")
+    return normalized in ("idontknow", "i_dont_know", "dontknow")
+
+
+def add_i_dont_know_option(question_dict):
+    """Add 'I don't know' as option5 to a question dict. Modifies in place, returns same dict."""
+    question_dict["option5"] = I_DONT_KNOW
+    return question_dict
+
+
 # ---------------- Email Helper ----------------
 import logging
 logger = logging.getLogger(__name__)
@@ -392,7 +410,10 @@ class DynamictestquestionsAPI(APIView):
         questions = list(DynamicTechQuestion.objects.filter(isactive=True))
         random.shuffle(questions)
         serializer = QuestionTechSerializer(questions, many=True)
-        return Response(serializer.data)
+        data = serializer.data
+        for q in data:
+            q["option5"] = I_DONT_KNOW
+        return Response(data)
     
 
 class DynamicSoftSkillsquestionsAPI(APIView):
@@ -403,7 +424,10 @@ class DynamicSoftSkillsquestionsAPI(APIView):
         questions = list(DynamicSoftSkillsQuestion.objects.filter(isactive=True))
         random.shuffle(questions)
         serializer = QuestionSoftSkillsSerializer(questions, many=True)
-        return Response(serializer.data)
+        data = serializer.data
+        for q in data:
+            q["option5"] = I_DONT_KNOW
+        return Response(data)
 
 
 
@@ -460,9 +484,9 @@ class StartAssessmentAPI(APIView):
 
         selected_questions = random.sample(list(questions_qs), min(num_questions, questions_qs.count()))
 
-        session = AssessmentSession.objects.create(
-            user=user,
-            questions=[{
+        questions_data = []
+        for q in selected_questions:
+            qdict = {
                 "text": q.questiontext,
                 "option1": q.option1,
                 "option2": q.option2,
@@ -472,9 +496,16 @@ class StartAssessmentAPI(APIView):
                 "skill": q.skill.strip(),
                 "difficulty": q.difficulty,
                 "RoleMapping": q.RoleMapping
-            } for q in selected_questions],
+            }
+            add_i_dont_know_option(qdict)
+            questions_data.append(qdict)
+
+        session = AssessmentSession.objects.create(
+            user=user,
+            questions=questions_data,
             current_question_index=0,
-            answers=[]
+            answers=[],
+            dont_know_per_skill={}
         )
 
         return Response({
@@ -508,12 +539,23 @@ class SubmitAnswerAPI(APIView):
             if not prev_question:
                 return Response({"error": "Question not found in session"}, status=400)
 
-            correct_opt_num = prev_question["correct_option"]
-            is_correct = (answer.strip() == prev_question[f"option{correct_opt_num}"].strip())
-
             prev_skill = (prev_question.get("skill") or "").strip()
             prev_role = prev_question.get("RoleMapping")
             prev_difficulty = prev_question.get("difficulty")
+            correct_opt_num = prev_question["correct_option"]
+            correct_answer = prev_question[f"option{correct_opt_num}"].strip() if correct_opt_num else ""
+
+            # Detect "I don't know" - treat as incorrect and track per skill
+            user_said_i_dont_know = is_i_dont_know(answer)
+            if user_said_i_dont_know:
+                dont_know_counts = getattr(session, "dont_know_per_skill", None) or {}
+                if not isinstance(dont_know_counts, dict):
+                    dont_know_counts = {}
+                dont_know_counts[prev_skill] = dont_know_counts.get(prev_skill, 0) + 1
+                session.dont_know_per_skill = dont_know_counts
+                is_correct = False
+            else:
+                is_correct = (answer.strip() == correct_answer)
 
             # Save answer
             session.answers.append({
@@ -525,7 +567,13 @@ class SubmitAnswerAPI(APIView):
                 "RoleMapping": prev_role,
             })
 
-            
+            # Skills to skip: user tapped "I don't know" >= 2 times on this topic
+            dont_know_counts = getattr(session, "dont_know_per_skill", None) or {}
+            skipped_skills = {s.lower() for s, c in dont_know_counts.items() if c >= 2}
+
+            def is_skill_skipped(skill_name):
+                return (skill_name or "").strip().lower() in skipped_skills
+
             if is_correct:
                 next_skill = prev_skill
                 next_difficulty = "hard" if prev_difficulty != "hard" else "hard"
@@ -539,11 +587,19 @@ class SubmitAnswerAPI(APIView):
                 skills_in_role_norm = [s.lower() for s in skills_in_role]
 
                 available_skills = [
-                    skills_in_role[i] for i, s in enumerate(skills_in_role_norm) if s != prev_skill_norm
+                    skills_in_role[i] for i, s in enumerate(skills_in_role_norm)
+                    if s != prev_skill_norm and s not in skipped_skills
                 ]
                 next_skill = random.choice(available_skills) if available_skills else prev_skill
 
-            
+            # If next_skill was chosen but is now skipped, pick another
+            if is_skill_skipped(next_skill):
+                skills_in_role = list(DynamicTechQuestion.objects.filter(
+                    RoleMapping=prev_role, isactive=True
+                ).values_list("skill", flat=True).distinct())
+                skills_in_role = [s.strip() for s in skills_in_role if s and not is_skill_skipped(s)]
+                next_skill = random.choice(skills_in_role) if skills_in_role else prev_skill
+
             answered_texts = [a["text"] for a in session.answers]
             next_qs = list(DynamicTechQuestion.objects.filter(
                 RoleMapping=prev_role,
@@ -552,12 +608,15 @@ class SubmitAnswerAPI(APIView):
                 isactive=True
             ).exclude(questiontext__in=answered_texts))
 
+            # Exclude questions from skipped skills
+            next_qs = [q for q in next_qs if not is_skill_skipped((q.skill or "").strip())]
+
             if not next_qs:
-               
                 next_qs = list(DynamicTechQuestion.objects.filter(
                     RoleMapping=prev_role,
                     isactive=True
                 ).exclude(questiontext__in=answered_texts))
+                next_qs = [q for q in next_qs if not is_skill_skipped((q.skill or "").strip())]
 
             next_question = None
             if next_qs:
@@ -573,15 +632,22 @@ class SubmitAnswerAPI(APIView):
                     "difficulty": nq.difficulty,
                     "RoleMapping": nq.RoleMapping,
                 }
+                add_i_dont_know_option(next_question)
                 session.questions.append(next_question)
 
             session.current_question_index += 1
             session.save()
 
+            # Tell frontend when a topic was just skipped (user tapped "I don't know" twice)
+            topic_skipped = None
+            if user_said_i_dont_know and prev_skill and (dont_know_counts.get(prev_skill) or 0) >= 2:
+                topic_skipped = prev_skill
+
             return Response({
                 "message": "Answer submitted",
                 "correct": is_correct,
-                "next_question": next_question
+                "next_question": next_question,
+                "topic_skipped": topic_skipped,
             })
 
         except Exception as e:
@@ -796,9 +862,9 @@ class StartSoftAssessmentAPI(APIView):
             selected_questions = random.sample(questions_qs, min(num_questions, len(questions_qs)))
             random.shuffle(selected_questions)
 
-            session = AssessmentSession.objects.create(
-                user=user,
-                questions=[{
+            questions_data = []
+            for q in selected_questions:
+                qdict = {
                     "questiontext": q.questiontext,
                     "option1": q.option1,
                     "option2": q.option2,
@@ -809,9 +875,16 @@ class StartSoftAssessmentAPI(APIView):
                     "difficulty": q.difficulty,
                     "RoleMapping": q.RoleMapping,
                     "type": "soft"
-                } for q in selected_questions],
+                }
+                add_i_dont_know_option(qdict)
+                questions_data.append(qdict)
+
+            session = AssessmentSession.objects.create(
+                user=user,
+                questions=questions_data,
                 current_question_index=0,
-                answers=[]
+                answers=[],
+                dont_know_per_skill={}
             )
 
             first_question = session.questions[0] if session.questions else None
@@ -844,16 +917,45 @@ class SubmitSoftAnswerAPI(APIView):
 
             session = AssessmentSession.objects.get(id=session_id)
 
+            # Find current question to get skill for "I don't know" tracking
+            current_idx = session.current_question_index
+            if current_idx < len(session.questions):
+                current_q = session.questions[current_idx]
+                prev_skill = (current_q.get("skill") or "").strip()
+                if is_i_dont_know(answer):
+                    dont_know_counts = getattr(session, "dont_know_per_skill", None) or {}
+                    if not isinstance(dont_know_counts, dict):
+                        dont_know_counts = {}
+                    dont_know_counts[prev_skill] = dont_know_counts.get(prev_skill, 0) + 1
+                    session.dont_know_per_skill = dont_know_counts
+
             session.answers.append({"question_text": question_text, "answer": answer})
             session.current_question_index += 1
             session.save()
 
+            # Skip questions from topics where user tapped "I don't know" twice
+            dont_know_counts = getattr(session, "dont_know_per_skill", None) or {}
+            skipped_skills = {s.lower() for s, c in dont_know_counts.items() if c >= 2}
+            topics_skipped_this_round = []
+
+            while session.current_question_index < len(session.questions):
+                next_q = session.questions[session.current_question_index]
+                next_skill = (next_q.get("skill") or "").strip()
+                next_skill_lower = next_skill.lower()
+                if next_skill_lower not in skipped_skills:
+                    break
+                topics_skipped_this_round.append(next_skill)
+                session.current_question_index += 1
+            session.save()
+
             if session.current_question_index >= len(session.questions):
-                total_score = sum(
-                    1 for q, a in zip(session.questions, session.answers)
-                    if a["answer"] == q[f"option{q['correct_option']}"]
-                )
-                total_questions = len(session.questions)
+                total_score = 0
+                for a in session.answers:
+                    qtext = a.get("question_text", "")
+                    q = next((x for x in session.questions if (x.get("questiontext") or x.get("text")) == qtext), None)
+                    if q and a.get("answer") == q.get(f"option{q.get('correct_option', 1)}"):
+                        total_score += 1
+                total_questions = len(session.answers)
                 session.completed = True
                 session.save()
 
@@ -866,7 +968,8 @@ class SubmitSoftAnswerAPI(APIView):
             next_question = session.questions[session.current_question_index]
             return Response({
                 "message": "Answer submitted",
-                "next_question": next_question
+                "next_question": next_question,
+                "topics_skipped": topics_skipped_this_round,
             })
 
         except AssessmentSession.DoesNotExist:

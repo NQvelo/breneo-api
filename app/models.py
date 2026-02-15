@@ -40,10 +40,11 @@ class AssessmentSession(models.Model):
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
     current_question_index = models.IntegerField(default=0)
-    questions = models.JSONField(default=list)  
-    answers = models.JSONField(default=list)   
+    questions = models.JSONField(default=list)
+    answers = models.JSONField(default=list)
     completed = models.BooleanField(default=False)
     final_role = models.CharField(max_length=100, null=True, blank=True)
+    dont_know_per_skill = models.JSONField(default=dict)
 
     def __str__(self):
         return f"{self.user.username} - Session {self.id} - Completed: {self.completed}"
