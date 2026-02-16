@@ -16,12 +16,11 @@ class Command(BaseCommand):
         for i, profession in enumerate(professions, 1):
             self.stdout.write(f"[{i}/{total}] Updating {profession.title}...")
             
-            # 1. Update description if empty
-            if not profession.description:
-                desc = fetch_profession_description_from_groq(profession.title)
-                if desc:
-                    profession.description = desc
-                    self.stdout.write(f"   - Description updated.")
+            # 1. Update description (Always update to ensure "rich" content)
+            desc = fetch_profession_description_from_groq(profession.title)
+            if desc:
+                profession.description = desc
+                self.stdout.write(f"   - Rich description updated.")
 
             # 2. Update salary info
             updated_salary_info = profession.salary_info or {}

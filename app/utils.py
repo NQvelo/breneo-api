@@ -39,8 +39,9 @@ def fetch_profession_description_from_groq(job_title: str) -> str:
     client = Groq(api_key=api_key)
     
     prompt = (
-        f"Provide a concise summary (max 2 sentences) of what a {job_title} does. "
-        f"No introductory text, just the summary."
+        f"Provide a professional, detailed, and engaging description of what a {job_title} does. "
+        f"Explain the core responsibilities, the impact they have on a business, and the primary tools or methodologies they use. "
+        f"Keep it between 3-5 sentences. No introductory text like 'Here is a description', just the content."
     )
     
     try:
