@@ -263,6 +263,7 @@ class SkillTestResult(models.Model):
     total_score = models.CharField(max_length=20)
     skills_json = models.JSONField()               
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.final_role} ({self.total_score})"

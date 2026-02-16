@@ -283,10 +283,10 @@ class SkillScoreAdmin(admin.ModelAdmin):
 
 @admin.register(SkillTestResult)
 class SkillTestResultAdmin(admin.ModelAdmin):
-    list_display = ('user', 'final_role', 'total_score', 'created_at')
+    list_display = ('user', 'final_role', 'total_score', 'created_at', 'updated_at')
     search_fields = ('user__username', 'final_role')
-    list_filter = ('final_role', 'created_at')
-    readonly_fields = ('created_at',)
+    list_filter = ('final_role', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
     ordering = ('-created_at',)
     actions = ['remove_duplicate_results', 'remove_all_duplicate_results']
 

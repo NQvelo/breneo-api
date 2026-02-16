@@ -156,8 +156,8 @@ class ProfessionOfUserSerializer(serializers.ModelSerializer):
 class SkillTestResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = SkillTestResult
-        fields = ['id', 'user', 'final_role', 'total_score', 'skills_json', 'created_at']
-        read_only_fields = ['user', 'created_at']
+        fields = ['id', 'user', 'final_role', 'total_score', 'skills_json', 'created_at', 'updated_at']
+        read_only_fields = ['user', 'created_at', 'updated_at']
 
 
 
