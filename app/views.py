@@ -89,6 +89,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 from .serializers import ChangePasswordSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from .profession_match import update_profession_of_user_from_skill_test
 
 
 
@@ -1369,10 +1370,12 @@ def save_test_results(request):
         last.total_score = total_score
         last.skills_json = skills_json
         last.save()
+        update_profession_of_user_from_skill_test(user)
         return Response(SkillTestResultSerializer(last).data, status=200)
 
     # First result for user: create
     obj = serializer.save(user=user)
+    update_profession_of_user_from_skill_test(user)
     return Response(serializer.data, status=201)
 # Get logged-in user's skill test results
 @api_view(['GET'])
