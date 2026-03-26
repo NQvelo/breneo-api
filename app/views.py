@@ -1,5 +1,6 @@
 import joblib
 from django.http import HttpResponse
+from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view,permission_classes
 from rest_framework.response import Response
@@ -56,6 +57,7 @@ from .serializers import (
     SkillSearchSerializer,
     UserSkillAttachSerializer,
     UserSkillResponseSerializer,
+    CourseListSerializer,
     SubscriptionPlanSerializer,
 )
 from django.contrib.auth.models import User
@@ -240,6 +242,57 @@ class RecommendedJobsAPI(APIView):
         }, status=200)
 
     
+# ---------------- Courses List API ----------------
+class CoursesListAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        qs = (
+            Course.objects.select_related("academy", "academy__user")
+            .prefetch_related("required_skills")
+            .all()
+        )
+
+        name = request.query_params.get("name")
+        academy_name = request.query_params.get("academy_name") or request.query_params.get("academy")
+        skills_param = request.query_params.get("skills")
+        location = request.query_params.get("location")
+
+        if name:
+            qs = qs.filter(title__icontains=name)
+
+        if academy_name:
+            # Academy.name property maps to user.first_name
+            qs = qs.filter(academy__user__first_name__icontains=academy_name)
+
+        if skills_param:
+            tokens = [t.strip() for t in skills_param.split(",") if t.strip()]
+            if tokens:
+                if all(t.isdigit() for t in tokens):
+                    qs = qs.filter(required_skills__id__in=[int(t) for t in tokens])
+                else:
+                    qs = qs.filter(required_skills__name__in=tokens)
+
+        if location:
+            qs = qs.filter(location__icontains=location)
+
+        qs = qs.distinct().order_by("title")
+
+        enrolled_course_ids = set()
+        if request.user and request.user.is_authenticated:
+            enrolled_course_ids = set(
+                Course.objects.filter(enrolled_users=request.user).values_list("id", flat=True)
+            )
+
+        serializer = CourseListSerializer(
+            qs,
+            many=True,
+            context={"request": request, "enrolled_course_ids": enrolled_course_ids},
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 # ---------------- Recommended Courses API ----------------
 class RecommendedCoursesAPI(APIView):
     authentication_classes = [JWTAuthentication]

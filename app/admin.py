@@ -208,12 +208,17 @@ class CourseAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "title",
+        "level",
+        "language",
+        "location",
+        "price",
+        "lessons_count",
         "academy",
         "user",
     )
     readonly_fields = ("id",)  
-    search_fields = ("title",)
-    list_filter = ("academy",)
+    search_fields = ("title", "lecturer_name", "description")
+    list_filter = ("academy", "level", "language", "location")
 
 
 

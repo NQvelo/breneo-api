@@ -267,6 +267,77 @@ class AcademyDetailSerializer(serializers.ModelSerializer):
             }
         return {}
     
+# --------------------------
+# Courses (List / Filters)
+# --------------------------
+class CourseListSerializer(serializers.ModelSerializer):
+    cover_image_url = serializers.SerializerMethodField()
+    lecturer_photo_url = serializers.SerializerMethodField()
+    required_skills = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
+    )
+    academy_id = serializers.SerializerMethodField()
+    academy_name = serializers.SerializerMethodField()
+    is_enrolled = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        fields = [
+            "id",
+            "title",
+            "academy_id",
+            "academy_name",
+            "cover_image_url",
+            "description",
+            "level",
+            "language",
+            "location",
+            "price",
+            "lessons_count",
+            "total_duration",
+            "required_skills",
+            "registration_link",
+            "lecturer_name",
+            "lecturer_photo_url",
+            "is_enrolled",
+        ]
+
+    def get_cover_image_url(self, obj):
+        if not obj.cover_image:
+            return None
+        try:
+            request = self.context.get("request")
+            return (
+                request.build_absolute_uri(obj.cover_image.url)
+                if request
+                else obj.cover_image.url
+            )
+        except Exception:
+            return None
+
+    def get_lecturer_photo_url(self, obj):
+        if not obj.lecturer_photo:
+            return None
+        try:
+            request = self.context.get("request")
+            return (
+                request.build_absolute_uri(obj.lecturer_photo.url)
+                if request
+                else obj.lecturer_photo.url
+            )
+        except Exception:
+            return None
+
+    def get_academy_id(self, obj):
+        return obj.academy_id
+
+    def get_academy_name(self, obj):
+        return obj.academy.name if obj.academy_id else None
+
+    def get_is_enrolled(self, obj):
+        enrolled_course_ids = self.context.get("enrolled_course_ids") or set()
+        return obj.id in enrolled_course_ids
+
 # ------- User Registration ---------------------
 
 

@@ -161,6 +161,29 @@ class Course(models.Model):
         User, on_delete=models.CASCADE, related_name="user_courses", null=True, blank=True
     )
     title = models.CharField(max_length=200)
+    cover_image = models.ImageField(
+        storage=MediaCloudinaryStorage(),
+        upload_to="course_covers/",
+        blank=True,
+        null=True,
+    )
+    description = models.TextField(blank=True, default="")
+    level = models.CharField(max_length=100, blank=True, default="")
+    language = models.CharField(max_length=100, blank=True, default="")
+    location = models.CharField(max_length=255, blank=True, default="")
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    lessons_count = models.PositiveIntegerField(default=0)
+    total_duration = models.CharField(max_length=100, blank=True, default="")
+    required_skills = models.ManyToManyField(Skill, related_name="required_for_courses", blank=True)
+    enrolled_users = models.ManyToManyField(User, related_name="enrolled_courses", blank=True)
+    registration_link = models.URLField(blank=True, null=True)
+    lecturer_name = models.CharField(max_length=255, blank=True, default="")
+    lecturer_photo = models.ImageField(
+        storage=MediaCloudinaryStorage(),
+        upload_to="lecturer_photos/",
+        blank=True,
+        null=True,
+    )
     skills_taught = models.ManyToManyField(Skill, related_name="courses")
 
     def __str__(self):
