@@ -338,6 +338,39 @@ class CourseListSerializer(serializers.ModelSerializer):
         enrolled_course_ids = self.context.get("enrolled_course_ids") or set()
         return obj.id in enrolled_course_ids
 
+
+class CourseManageSerializer(serializers.ModelSerializer):
+    required_skills = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Skill.objects.all(), required=False
+    )
+    skills_taught = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Skill.objects.all(), required=False
+    )
+    enrolled_users = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=User.objects.all(), required=False
+    )
+
+    class Meta:
+        model = Course
+        fields = [
+            "id",
+            "title",
+            "cover_image",
+            "description",
+            "level",
+            "language",
+            "location",
+            "price",
+            "lessons_count",
+            "total_duration",
+            "required_skills",
+            "skills_taught",
+            "enrolled_users",
+            "registration_link",
+            "lecturer_name",
+            "lecturer_photo",
+        ]
+
 # ------- User Registration ---------------------
 
 

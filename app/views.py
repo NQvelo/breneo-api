@@ -1,6 +1,5 @@
 import joblib
 from django.http import HttpResponse
-from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view,permission_classes
 from rest_framework.response import Response
@@ -58,10 +57,12 @@ from .serializers import (
     UserSkillAttachSerializer,
     UserSkillResponseSerializer,
     CourseListSerializer,
+    CourseManageSerializer,
     SubscriptionPlanSerializer,
 )
 from django.contrib.auth.models import User
 import os, requests, random
+import uuid
 from rest_framework import status
 from rest_framework import generics
 import json
@@ -246,6 +247,7 @@ class RecommendedJobsAPI(APIView):
 class CoursesListAPIView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.AllowAny]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get(self, request):
         qs = (
@@ -291,6 +293,136 @@ class CoursesListAPIView(APIView):
             context={"request": request, "enrolled_course_ids": enrolled_course_ids},
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        if not request.user or not request.user.is_authenticated:
+            return Response(
+                {"error": "Authentication required."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        academy = Academy.objects.filter(user=request.user).first()
+        if not academy:
+            return Response(
+                {"error": "Only academy accounts can create courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        payload = request.data.copy()
+        if not payload.get("id"):
+            payload["id"] = str(uuid.uuid4())
+
+        serializer = CourseManageSerializer(data=payload)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        course = serializer.save(academy=academy, user=request.user)
+        response_serializer = CourseListSerializer(
+            course,
+            context={
+                "request": request,
+                "enrolled_course_ids": set(
+                    Course.objects.filter(enrolled_users=request.user).values_list("id", flat=True)
+                ),
+            },
+        )
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CourseDetailAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.AllowAny]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+    def get_course(self, course_id):
+        return Course.objects.filter(id=course_id).first()
+
+    def get(self, request, course_id):
+        course = self.get_course(course_id)
+        if not course:
+            return Response({"error": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        enrolled_course_ids = set()
+        if request.user and request.user.is_authenticated:
+            enrolled_course_ids = set(
+                Course.objects.filter(enrolled_users=request.user).values_list("id", flat=True)
+            )
+
+        serializer = CourseListSerializer(
+            course,
+            context={"request": request, "enrolled_course_ids": enrolled_course_ids},
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def _get_owner_academy(self, request, course):
+        if not request.user or not request.user.is_authenticated:
+            return None, Response(
+                {"error": "Authentication required."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        academy = Academy.objects.filter(user=request.user).first()
+        if not academy:
+            return None, Response(
+                {"error": "Only academy accounts can edit courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if course.academy_id != academy.id:
+            return None, Response(
+                {"error": "You can only edit your own courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return academy, None
+
+    def put(self, request, course_id):
+        course = self.get_course(course_id)
+        if not course:
+            return Response({"error": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
+        _, error_response = self._get_owner_academy(request, course)
+        if error_response:
+            return error_response
+
+        serializer = CourseManageSerializer(course, data=request.data, partial=False)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        updated = serializer.save()
+        return Response(
+            CourseListSerializer(
+                updated,
+                context={"request": request, "enrolled_course_ids": set()},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+    def patch(self, request, course_id):
+        course = self.get_course(course_id)
+        if not course:
+            return Response({"error": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
+        _, error_response = self._get_owner_academy(request, course)
+        if error_response:
+            return error_response
+
+        serializer = CourseManageSerializer(course, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        updated = serializer.save()
+        return Response(
+            CourseListSerializer(
+                updated,
+                context={"request": request, "enrolled_course_ids": set()},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, course_id):
+        course = self.get_course(course_id)
+        if not course:
+            return Response({"error": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
+        _, error_response = self._get_owner_academy(request, course)
+        if error_response:
+            return error_response
+
+        course.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ---------------- Recommended Courses API ----------------
