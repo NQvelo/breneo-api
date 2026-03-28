@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.utils.html import format_html
 from django.contrib.auth.hashers import make_password
@@ -473,3 +476,34 @@ class PaymentHistoryAdmin(admin.ModelAdmin):
     search_fields = ("order_id", "user__email", "card_mask")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
+
+
+# Academy users: display name is User.first_name only (Academy.name); hide last_name in admin.
+# Regular users: unchanged — full default User fieldsets from Django.
+admin.site.unregister(User)
+
+
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    def get_fieldsets(self, request, obj=None):
+        if not obj:
+            return super().get_fieldsets(request, obj)
+        if Academy.objects.filter(user_id=obj.pk).exists():
+            return (
+                (None, {"fields": ("username", "password")}),
+                (_("Personal info"), {"fields": ("first_name", "email")}),
+                (
+                    _("Permissions"),
+                    {
+                        "fields": (
+                            "is_active",
+                            "is_staff",
+                            "is_superuser",
+                            "groups",
+                            "user_permissions",
+                        ),
+                    },
+                ),
+                (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+            )
+        return super().get_fieldsets(request, obj)

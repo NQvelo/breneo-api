@@ -557,8 +557,12 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
 
 class AcademyUpdateSerializer(serializers.ModelSerializer):
+    """
+    Academy display name lives on the linked User: Academy.name -> user.first_name.
+    PATCH may send either `name` or `first_name`; both update User.first_name.
+    """
     id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(required=False, source="user.first_name")
+    name = serializers.CharField(required=False, allow_blank=True, source="user.first_name")
     email = serializers.EmailField(required=False, source="user.email")
 
     class Meta:
@@ -570,6 +574,14 @@ class AcademyUpdateSerializer(serializers.ModelSerializer):
             "website": {"required": False},
             "profile_image": {"required": False, "allow_null": True},
         }
+
+    def to_internal_value(self, data):
+        # Accept `first_name` as alias for `name` (User table field).
+        if hasattr(data, "copy"):
+            data = data.copy()
+        if data.get("first_name") is not None and data.get("name") is None:
+            data["name"] = data.get("first_name")
+        return super().to_internal_value(data)
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
