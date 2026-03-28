@@ -242,7 +242,14 @@ class RecommendedJobsAPI(APIView):
             "recommended_jobs": jobs_data
         }, status=200)
 
-    
+
+def _course_queryset_with_relations():
+    return (
+        Course.objects.select_related("academy", "academy__user")
+        .prefetch_related("required_skills", "skills_taught", "enrolled_users")
+    )
+
+
 # ---------------- Courses List API ----------------
 class CoursesListAPIView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -250,11 +257,7 @@ class CoursesListAPIView(APIView):
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get(self, request):
-        qs = (
-            Course.objects.select_related("academy", "academy__user")
-            .prefetch_related("required_skills")
-            .all()
-        )
+        qs = _course_queryset_with_relations().all()
 
         name = request.query_params.get("name")
         academy_name = request.query_params.get("academy_name") or request.query_params.get("academy")
@@ -317,6 +320,7 @@ class CoursesListAPIView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         course = serializer.save(academy=academy, user=request.user)
+        course = _course_queryset_with_relations().filter(pk=course.pk).first() or course
         response_serializer = CourseListSerializer(
             course,
             context={
@@ -335,7 +339,7 @@ class CourseDetailAPIView(APIView):
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get_course(self, course_id):
-        return Course.objects.filter(id=course_id).first()
+        return _course_queryset_with_relations().filter(id=course_id).first()
 
     def get(self, request, course_id):
         course = self.get_course(course_id)
@@ -385,10 +389,16 @@ class CourseDetailAPIView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         updated = serializer.save()
+        updated = _course_queryset_with_relations().filter(pk=updated.pk).first() or updated
+        enrolled_course_ids = set()
+        if request.user and request.user.is_authenticated:
+            enrolled_course_ids = set(
+                Course.objects.filter(enrolled_users=request.user).values_list("id", flat=True)
+            )
         return Response(
             CourseListSerializer(
                 updated,
-                context={"request": request, "enrolled_course_ids": set()},
+                context={"request": request, "enrolled_course_ids": enrolled_course_ids},
             ).data,
             status=status.HTTP_200_OK,
         )
@@ -405,10 +415,16 @@ class CourseDetailAPIView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         updated = serializer.save()
+        updated = _course_queryset_with_relations().filter(pk=updated.pk).first() or updated
+        enrolled_course_ids = set()
+        if request.user and request.user.is_authenticated:
+            enrolled_course_ids = set(
+                Course.objects.filter(enrolled_users=request.user).values_list("id", flat=True)
+            )
         return Response(
             CourseListSerializer(
                 updated,
-                context={"request": request, "enrolled_course_ids": set()},
+                context={"request": request, "enrolled_course_ids": enrolled_course_ids},
             ).data,
             status=status.HTTP_200_OK,
         )
@@ -423,6 +439,70 @@ class CourseDetailAPIView(APIView):
 
         course.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CourseEnrollAPIView(APIView):
+    """
+    Learners add/remove themselves on Course.enrolled_users (M2M).
+    Academy accounts cannot use this (they own courses).
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def _course(self, course_id):
+        return _course_queryset_with_relations().filter(id=course_id).first()
+
+    def _enrolled_ids_for_user(self, user):
+        if not user or not user.is_authenticated:
+            return set()
+        return set(
+            Course.objects.filter(enrolled_users=user).values_list("id", flat=True)
+        )
+
+    def post(self, request, course_id):
+        if Academy.objects.filter(user=request.user).exists():
+            return Response(
+                {"error": "Academy accounts cannot enroll in courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        course = self._course(course_id)
+        if not course:
+            return Response({"error": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
+        course.enrolled_users.add(request.user)
+        course = self._course(course_id)
+        return Response(
+            CourseListSerializer(
+                course,
+                context={
+                    "request": request,
+                    "enrolled_course_ids": self._enrolled_ids_for_user(request.user),
+                },
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, course_id):
+        if Academy.objects.filter(user=request.user).exists():
+            return Response(
+                {"error": "Academy accounts cannot use learner unenroll."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        course = self._course(course_id)
+        if not course:
+            return Response({"error": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
+        course.enrolled_users.remove(request.user)
+        course = self._course(course_id)
+        return Response(
+            CourseListSerializer(
+                course,
+                context={
+                    "request": request,
+                    "enrolled_course_ids": self._enrolled_ids_for_user(request.user),
+                },
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 # ---------------- Recommended Courses API ----------------

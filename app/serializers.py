@@ -270,12 +270,30 @@ class AcademyDetailSerializer(serializers.ModelSerializer):
 # --------------------------
 # Courses (List / Filters)
 # --------------------------
+class CourseSkillOutSerializer(serializers.ModelSerializer):
+    """Skills taught on a course (read-only in course payloads)."""
+
+    class Meta:
+        model = Skill
+        fields = ["id", "name"]
+
+
+class CourseEnrolledUserSerializer(serializers.ModelSerializer):
+    """Users enrolled on a course (M2M enrolled_users)."""
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "first_name", "last_name"]
+
+
 class CourseListSerializer(serializers.ModelSerializer):
     cover_image_url = serializers.SerializerMethodField()
     lecturer_photo_url = serializers.SerializerMethodField()
     required_skills = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="name"
     )
+    skills_taught = CourseSkillOutSerializer(many=True, read_only=True)
+    enrolled_users = CourseEnrolledUserSerializer(many=True, read_only=True)
     academy_id = serializers.SerializerMethodField()
     academy_name = serializers.SerializerMethodField()
     is_enrolled = serializers.SerializerMethodField()
@@ -296,6 +314,8 @@ class CourseListSerializer(serializers.ModelSerializer):
             "lessons_count",
             "total_duration",
             "required_skills",
+            "skills_taught",
+            "enrolled_users",
             "registration_link",
             "lecturer_name",
             "lecturer_photo_url",
