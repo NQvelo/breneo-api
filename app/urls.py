@@ -62,6 +62,12 @@ from .views import (
     UserSkillDetachView,
     UserSubscriptionView,
     PaymentHistoryView,
+    IndustryListAPIView,
+    EmployerProfileUpdateView,
+    EmployerLoginView,
+    TemporaryEmployerRegisterView,
+    TemporaryEmployerVerifyView,
+    EmployerChangePasswordView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -110,6 +116,12 @@ urlpatterns = [
     path("api/academy/register/", TemporaryAcademyRegisterView.as_view(), name="academy-register"),
     path('api/verify-academy-email/', TemporaryAcademyVerifyView.as_view(),name='verify-academy-email'),
 
+    path("api/industries/", IndustryListAPIView.as_view(), name="industries-list"),
+    path("api/employer/login/", EmployerLoginView.as_view(), name="employer-login"),
+    path("api/employer/login", EmployerLoginView.as_view(), name="employer-login-no-slash"),
+    path("api/employer/register/", TemporaryEmployerRegisterView.as_view(), name="employer-register"),
+    path("api/employer/verify-email/", TemporaryEmployerVerifyView.as_view(), name="employer-verify-email"),
+
     #------------- recovery password ---------------
     path('password-reset/request/', PasswordResetRequestView.as_view()),
     path('password-reset/verify/', PasswordResetVerifyView.as_view()),
@@ -118,6 +130,7 @@ urlpatterns = [
     #-------------- Change Password ----------------
     path("api/change-password/", ChangePasswordView.as_view(), name="change-password"),   
     path('api/academy/change-password/', AcademyChangePasswordView.as_view(), name='academy-change-password'),
+    path("api/employer/change-password/", EmployerChangePasswordView.as_view(), name="employer-change-password"),
     
      #-------------- Profile ----------------
     path("api/profile/", UserProfileView.as_view(), name="user-profile"),
@@ -125,6 +138,7 @@ urlpatterns = [
     path("api/me/social-links/", SocialLinksMeView.as_view(), name="me-social-links"),
     path("api/me/industry-profile/", IndustryProfileView.as_view(), name="industry-profile"),
     path("api/academy/profile/", AcademyProfileUpdateView.as_view(), name="academy-profile"),
+    path("api/employer/profile/", EmployerProfileUpdateView.as_view(), name="employer-profile"),
 
     # -------------- New tables API (all require JWT: Authorization: Bearer <token>) ----------------
     path("api/educations/", EducationViewSet.as_view({"get": "list", "post": "create"}), name="education-list"),

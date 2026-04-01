@@ -24,7 +24,10 @@ from .models import (
     SocialLinks,
     CareerQuestion,
     Academy,
+    Employer,
+    Industry,
     TemporaryAcademy,
+    TemporaryEmployer,
     SavedCourse,
     SavedJob,
     Education,
@@ -59,6 +62,10 @@ from .serializers import (
     CourseListSerializer,
     CourseManageSerializer,
     SubscriptionPlanSerializer,
+    TemporaryEmployerRegisterSerializer,
+    EmployerUpdateSerializer,
+    EmployerChangePasswordSerializer,
+    IndustrySerializer,
 )
 from django.contrib.auth.models import User
 import os, requests, random
@@ -111,6 +118,29 @@ def is_i_dont_know(answer):
         return False
     normalized = str(answer).strip().lower().replace("'", "").replace(" ", "")
     return normalized in ("idontknow", "i_dont_know", "dontknow")
+
+
+def _user_is_academy(user):
+    return bool(user and user.is_authenticated and Academy.objects.filter(user_id=user.pk).exists())
+
+
+def _user_is_employer(user):
+    return bool(user and user.is_authenticated and Employer.objects.filter(user_id=user.pk).exists())
+
+
+def _reject_non_regular_user_profile(request):
+    """User/UserProfile social APIs are for default users only."""
+    if _user_is_academy(request.user):
+        return Response(
+            {"error": "Academy accounts should use /api/academy/profile/"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    if _user_is_employer(request.user):
+        return Response(
+            {"error": "Employer accounts should use /api/employer/profile/"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    return None
 
 
 # ---------------- Email Helper ----------------
@@ -461,9 +491,14 @@ class CourseEnrollAPIView(APIView):
         )
 
     def post(self, request, course_id):
-        if Academy.objects.filter(user=request.user).exists():
+        if _user_is_academy(request.user):
             return Response(
                 {"error": "Academy accounts cannot enroll in courses."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if _user_is_employer(request.user):
+            return Response(
+                {"error": "Employer accounts cannot enroll in courses."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         course = self._course(course_id)
@@ -483,9 +518,14 @@ class CourseEnrollAPIView(APIView):
         )
 
     def delete(self, request, course_id):
-        if Academy.objects.filter(user=request.user).exists():
+        if _user_is_academy(request.user):
             return Response(
                 {"error": "Academy accounts cannot use learner unenroll."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if _user_is_employer(request.user):
+            return Response(
+                {"error": "Employer accounts cannot use learner unenroll."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         course = self._course(course_id)
@@ -1787,13 +1827,7 @@ class UserProfileView(APIView):
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def _reject_academy(self, request):
-        """User profile is only for regular users, not academies."""
-        if Academy.objects.filter(user=request.user).exists():
-            return Response(
-                {"error": "Academy accounts should use /api/academy/profile/"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return None
+        return _reject_non_regular_user_profile(request)
 
     def get(self, request):
         if resp := self._reject_academy(request):
@@ -1918,12 +1952,7 @@ class PersonalProfileView(APIView):
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def _reject_academy(self, request):
-        if Academy.objects.filter(user=request.user).exists():
-            return Response(
-                {"error": "Academy accounts should use /api/academy/profile/"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return None
+        return _reject_non_regular_user_profile(request)
 
     def get(self, request):
         if resp := self._reject_academy(request):
@@ -2002,12 +2031,7 @@ class SocialLinksMeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def _reject_academy(self, request):
-        if Academy.objects.filter(user=request.user).exists():
-            return Response(
-                {"error": "Academy accounts should use /api/academy/profile/ for social links."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return None
+        return _reject_non_regular_user_profile(request)
 
     def get(self, request):
         if resp := self._reject_academy(request):
@@ -2304,7 +2328,340 @@ class AcademyProfileUpdateView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# ---------------- Employer (same pattern as Academy) ----------------
 
+
+class IndustryListAPIView(APIView):
+    """GET /api/industries/ — list industry catalog for employer forms."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        qs = Industry.objects.all().order_by("name")
+        return Response(IndustrySerializer(qs, many=True).data)
+
+
+class EmployerProfileUpdateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def get_employer(self, request):
+        return (
+            Employer.objects.filter(user=request.user)
+            .prefetch_related("industries")
+            .first()
+        )
+
+    def get(self, request):
+        employer = self.get_employer(request)
+        if not employer:
+            return Response({"error": "Employer not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        social_links, _ = SocialLinks.objects.get_or_create(employer=employer)
+        social_data = SocialLinksSerializer(social_links).data
+
+        try:
+            logo_url = (
+                request.build_absolute_uri(employer.logo.url)
+                if employer.logo
+                else None
+            )
+        except Exception:
+            logo_url = None
+
+        industries = IndustrySerializer(employer.industries.all(), many=True).data
+
+        return Response(
+            {
+                "id": employer.id,
+                "company_name": employer.company_name,
+                "email": employer.email,
+                "phone_number": employer.phone_number,
+                "description": employer.description,
+                "website": employer.website,
+                "locations": employer.locations or [],
+                "number_of_employees": employer.number_of_employees,
+                "industries": industries,
+                "is_verified": employer.is_verified,
+                "created_at": employer.created_at,
+                "logo": logo_url,
+                "social_links": social_data,
+            }
+        )
+
+    def patch(self, request):
+        employer = self.get_employer(request)
+        if not employer:
+            return Response({"error": "Employer not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmployerUpdateSerializer(
+            employer,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        employer = self.get_employer(request)
+        social_links, _ = SocialLinks.objects.get_or_create(employer=employer)
+        social_data = request.data.get("social_links", None)
+
+        if isinstance(social_data, dict):
+            social_serializer = SocialLinksSerializer(
+                social_links,
+                data=social_data,
+                partial=True,
+            )
+            social_serializer.is_valid(raise_exception=True)
+            social_serializer.save()
+
+        try:
+            logo_url = (
+                request.build_absolute_uri(employer.logo.url)
+                if employer.logo
+                else None
+            )
+        except Exception:
+            logo_url = None
+
+        industries = IndustrySerializer(employer.industries.all(), many=True).data
+
+        return Response(
+            {
+                "message": "Employer profile updated successfully.",
+                "employer": {
+                    "id": employer.id,
+                    "company_name": employer.company_name,
+                    "email": employer.email,
+                    "phone_number": employer.phone_number,
+                    "description": employer.description,
+                    "website": employer.website,
+                    "locations": employer.locations or [],
+                    "number_of_employees": employer.number_of_employees,
+                    "industries": industries,
+                    "is_verified": employer.is_verified,
+                    "logo": logo_url,
+                },
+                "social_links": SocialLinksSerializer(social_links).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class EmployerLoginView(APIView):
+    def post(self, request):
+        identifier = request.data.get("email")
+        password = request.data.get("password")
+
+        if not identifier or not password:
+            return Response(
+                {"error": "Email (or company name) and password are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        employer = (
+            Employer.objects.filter(user__email__iexact=identifier).first()
+            or Employer.objects.filter(user__first_name__iexact=identifier).first()
+        )
+
+        if not employer:
+            return Response({"error": "Employer not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not employer.user.check_password(password):
+            return Response(
+                {"error": "Invalid credentials"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        refresh = RefreshToken.for_user(employer.user)
+        access = refresh.access_token
+
+        return Response(
+            {
+                "message": "Employer login successful",
+                "access": str(access),
+                "refresh": str(refresh),
+                "user_type": "employer",
+                "employer": {
+                    "company_name": employer.company_name,
+                    "email": employer.email,
+                    "phone_number": employer.phone_number,
+                    "website": employer.website,
+                    "description": employer.description,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class TemporaryEmployerRegisterView(generics.CreateAPIView):
+    queryset = TemporaryEmployer.objects.all()
+    serializer_class = TemporaryEmployerRegisterSerializer
+
+    def post(self, request):
+        email = request.data.get("email")
+        temp = TemporaryEmployer.objects.filter(email=email).first()
+
+        if temp:
+            temp.company_name = request.data.get("company_name")
+            temp.password = make_password(request.data.get("password"))
+            temp.phone_number = request.data.get("phone_number")
+            temp.description = request.data.get("description")
+            temp.website = request.data.get("website")
+            temp.locations = request.data.get("locations") or []
+            temp.number_of_employees = request.data.get("number_of_employees") or ""
+            temp.industry_names = request.data.get("industry_names") or []
+        else:
+            temp = TemporaryEmployer.objects.create(
+                company_name=request.data.get("company_name"),
+                email=email,
+                password=make_password(request.data.get("password")),
+                phone_number=request.data.get("phone_number"),
+                description=request.data.get("description"),
+                website=request.data.get("website"),
+                locations=request.data.get("locations") or [],
+                number_of_employees=request.data.get("number_of_employees") or "",
+                industry_names=request.data.get("industry_names") or [],
+            )
+
+        temp.generate_verification_code()
+        temp.save()
+
+        html_message = render_to_string(
+            "emails/academy_verification_code.html",
+            {
+                "verification_code": temp.verification_code,
+                "logo_url": getattr(settings, "BRENEO_LOGO_URL", ""),
+            },
+        )
+        text_message = render_to_string(
+            "emails/academy_verification_code.txt",
+            {
+                "verification_code": temp.verification_code,
+            },
+        )
+
+        success, error = send_email_safely(
+            subject="Your Employer Verification Code",
+            text_message=text_message,
+            html_message=html_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to_email=email,
+        )
+
+        if not success:
+            return Response(
+                {
+                    "message": "Verification code created. Email delivery may be delayed.",
+                    "error": "Email sending failed",
+                },
+                status=status.HTTP_202_ACCEPTED,
+            )
+
+        return Response({"message": "Verification code sent to your email."}, status=200)
+
+
+class TemporaryEmployerVerifyView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        code = request.data.get("code")
+
+        if not email or not code:
+            return Response({"error": "Email and code are required"}, status=400)
+
+        try:
+            temp = TemporaryEmployer.objects.get(email=email)
+        except TemporaryEmployer.DoesNotExist:
+            return Response({"error": "Temporary employer not found"}, status=404)
+
+        if temp.verification_code != code:
+            return Response({"error": "Invalid verification code"}, status=400)
+
+        if temp.code_expires_at < timezone.now():
+            temp.delete()
+            return Response({"error": "Verification code expired"}, status=400)
+
+        if User.objects.filter(email=email).exists():
+            temp.delete()
+            return Response({"error": "An account with this email already exists"}, status=400)
+
+        user = User.objects.create(
+            username=temp.email,
+            email=temp.email,
+            password=temp.password,
+            first_name=temp.company_name,
+            last_name="",
+            is_active=True,
+        )
+
+        employer = Employer.objects.create(
+            user=user,
+            phone_number=temp.phone_number or "",
+            description=temp.description or "No description provided",
+            website=temp.website,
+            locations=temp.locations if isinstance(temp.locations, list) else [],
+            number_of_employees=temp.number_of_employees or "",
+            is_verified=True,
+        )
+
+        for raw in temp.industry_names or []:
+            name = (str(raw) or "").strip()
+            if not name:
+                continue
+            industry, _ = Industry.objects.get_or_create(name=name)
+            employer.industries.add(industry)
+
+        temp.delete()
+
+        return Response({"message": "Employer registered successfully!"}, status=201)
+
+
+class EmployerChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        employer = Employer.objects.filter(user=request.user).first()
+        if not employer:
+            return Response({"error": "Employer not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmployerChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        request.user.set_password(serializer.validated_data["new_password"])
+        request.user.save()
+
+        if employer.user and employer.user.email:
+            html_message = render_to_string(
+                "emails/password_changed.html",
+                {
+                    "first_name": employer.user.first_name
+                    or employer.company_name
+                    or employer.user.username,
+                    "changed_at": timezone.now().strftime("%B %d, %Y at %I:%M %p"),
+                    "logo_url": getattr(settings, "BRENEO_LOGO_URL", ""),
+                },
+            )
+            text_message = render_to_string(
+                "emails/password_changed.txt",
+                {
+                    "first_name": employer.user.first_name
+                    or employer.company_name
+                    or employer.user.username,
+                    "changed_at": timezone.now().strftime("%B %d, %Y at %I:%M %p"),
+                },
+            )
+            send_email_safely(
+                subject="Password Changed Successfully",
+                text_message=text_message,
+                html_message=html_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to_email=employer.user.email,
+            )
+
+        return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
 
 
 # --------------------------
@@ -2669,8 +3026,10 @@ class UserProfileDetailView(APIView):
             profile = UserProfile.objects.get(id=user_id)
         except UserProfile.DoesNotExist:
             return Response({"error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND)
-        # User profiles are only for regular users, not academies
+        # User profiles are only for regular users, not academies or employers
         if Academy.objects.filter(user=profile.user).exists():
+            return Response({"error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        if Employer.objects.filter(user=profile.user).exists():
             return Response({"error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
         saved_courses = SavedCourse.objects.filter(user=profile.user).values_list("course__title", flat=True)

@@ -30,9 +30,12 @@ from .models import (
     DynamicSoftSkillsQuestion,
     SkillScore,
     Academy,
+    Employer,
+    Industry,
     UserProfile,
     TemporaryUser,
     TemporaryAcademy,
+    TemporaryEmployer,
     SkillTestResult,
     SocialLinks,
     Education,
@@ -185,6 +188,12 @@ admin.site.register(TemporaryUser)
 admin.site.register(TemporaryAcademy)
 
 
+@admin.register(TemporaryEmployer)
+class TemporaryEmployerAdmin(admin.ModelAdmin):
+    list_display = ("email", "company_name", "code_expires_at")
+    search_fields = ("email", "company_name")
+
+
 
 
 
@@ -204,6 +213,33 @@ class JobAdmin(admin.ModelAdmin):
     readonly_fields = ("id",) 
     search_fields = ("title",)
     list_filter = ("time_to_ready",)
+
+
+@admin.register(Industry)
+class IndustryAdmin(admin.ModelAdmin):
+    list_display = ("id", "name")
+    search_fields = ("name",)
+    ordering = ("name",)
+
+
+@admin.register(Employer)
+class EmployerAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "company_name_display",
+        "user",
+        "phone_number",
+        "number_of_employees",
+        "created_at",
+    )
+    list_filter = ("is_verified", "created_at")
+    search_fields = ("user__email", "user__first_name", "phone_number")
+    filter_horizontal = ("industries",)
+    readonly_fields = ("id", "created_at")
+
+    @admin.display(description="Company")
+    def company_name_display(self, obj):
+        return obj.company_name
 
 
 @admin.register(Course)
@@ -333,6 +369,10 @@ class UserProfileAdminForm(forms.ModelForm):
             raise forms.ValidationError(
                 "UserProfile is only for regular users. This user is linked to an Academy; edit the Academy record instead."
             )
+        if user and user.pk and Employer.objects.filter(user_id=user.pk).exists():
+            raise forms.ValidationError(
+                "UserProfile is only for regular users. This user is linked to an Employer; edit the Employer record instead."
+            )
         return cleaned
 
     def __init__(self, *args, **kwargs):
@@ -437,8 +477,15 @@ class AcademyAdmin(ChangeFormSaveErrorMixin, admin.ModelAdmin):
 
 @admin.register(SocialLinks)
 class SocialLinksAdmin(admin.ModelAdmin):
-    list_display = ('user', 'academy')
-    search_fields = ('user__username', 'user__email', 'academy__user__first_name', 'academy__user__email')
+    list_display = ('user', 'academy', 'employer')
+    search_fields = (
+        'user__username',
+        'user__email',
+        'academy__user__first_name',
+        'academy__user__email',
+        'employer__user__first_name',
+        'employer__user__email',
+    )
 
 
 @admin.register(Education)
@@ -488,7 +535,9 @@ class UserAdmin(BaseUserAdmin):
     def get_fieldsets(self, request, obj=None):
         if not obj:
             return super().get_fieldsets(request, obj)
-        if Academy.objects.filter(user_id=obj.pk).exists():
+        if Academy.objects.filter(user_id=obj.pk).exists() or Employer.objects.filter(
+            user_id=obj.pk
+        ).exists():
             return (
                 (None, {"fields": ("username", "password")}),
                 (_("Personal info"), {"fields": ("first_name", "email")}),

@@ -295,6 +295,18 @@ class SkillTestResult(models.Model):
 
 
 
+class Industry(models.Model):
+    """Catalog for employer industries (many-to-many on Employer)."""
+
+    name = models.CharField(max_length=200, unique=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Academy(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="academy")
     phone_number = models.CharField(max_length=20)
@@ -320,15 +332,59 @@ class Academy(models.Model):
 
     def __str__(self):
         return self.name
-    
 
+
+class Employer(models.Model):
+    """
+    Employer org profile: company name lives on User.first_name (see company_name / name).
+    Authentication uses the linked User account password (no separate Employer.password field).
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="employer")
+    phone_number = models.CharField(max_length=20)
+    description = models.TextField(default="No description provided")
+    website = models.URLField(blank=True, null=True)
+    logo = models.ImageField(
+        storage=MediaCloudinaryStorage(),
+        upload_to="employer_logos/",
+        blank=True,
+        null=True,
+    )
+    locations = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='List of strings, e.g. ["Tbilisi, Georgia", "Remote"]',
+    )
+    number_of_employees = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text='e.g. "1-10", "11-50", "1000+"',
+    )
+    industries = models.ManyToManyField(Industry, related_name="employers", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    @property
+    def company_name(self):
+        return self.user.first_name if self.user else "Unknown Company"
+
+    @property
+    def name(self):
+        return self.company_name
+
+    @property
+    def email(self):
+        return self.user.email if self.user else ""
+
+    def __str__(self):
+        return self.company_name
 
 
 
 
 
 class UserProfile(models.Model):
-    """Profile for regular users only. Academies use the Academy model, not UserProfile."""
+    """Profile for regular users only. Academies use Academy; employers use Employer — not UserProfile."""
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -349,6 +405,10 @@ class UserProfile(models.Model):
         if self.user_id and Academy.objects.filter(user_id=self.user_id).exists():
             raise ValueError(
                 "UserProfile is only for regular users. Academy profiles belong in the Academy table."
+            )
+        if self.user_id and Employer.objects.filter(user_id=self.user_id).exists():
+            raise ValueError(
+                "UserProfile is only for regular users. Employer profiles belong in the Employer table."
             )
         super().save(*args, **kwargs)
 
@@ -376,6 +436,35 @@ class TemporaryUser(models.Model):
     def __str__(self):
         return f"{self.email} (Temporary)"
     
+
+
+class TemporaryEmployer(models.Model):
+    """Pre-verification employer signup (mirrors TemporaryAcademy)."""
+    company_name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=128)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    locations = models.JSONField(default=list, blank=True)
+    number_of_employees = models.CharField(max_length=100, blank=True, default="")
+    industry_names = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of industry name strings; Industry rows are created/linked on verify.",
+    )
+    verification_code = models.CharField(max_length=6, blank=True, null=True)
+    code_expires_at = models.DateTimeField(blank=True, null=True)
+
+    def generate_verification_code(self):
+        code = str(random.randint(100000, 999999))
+        self.verification_code = code
+        self.code_expires_at = timezone.now() + timedelta(minutes=10)
+        self.save()
+        return code
+
+    def __str__(self):
+        return f"{self.email} (Temporary Employer)"
 
 
 class TemporaryAcademy(models.Model):
@@ -434,6 +523,13 @@ class SocialLinks(models.Model):
         blank=True,
         related_name="social_links",
     )
+    employer = models.OneToOneField(
+        "Employer",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="social_links",
+    )
 
     github = models.URLField(blank=True, null=True)
     linkedin = models.URLField(blank=True, null=True)
@@ -447,6 +543,8 @@ class SocialLinks(models.Model):
             return f"{self.user.username}'s Social Links"
         elif self.academy:
             return f"{self.academy.name}'s Social Links"
+        elif self.employer_id:
+            return f"{self.employer.company_name}'s Social Links"
         return "Unknown Social Links"
 
 

@@ -11,8 +11,11 @@ from .models import (
     ProfessionOfUser,
     SkillTestResult,
     TemporaryAcademy,
+    TemporaryEmployer,
+    Industry,
     SocialLinks,
     Academy,
+    Employer,
     UserProfile,
     TemporaryUser,
     Course,
@@ -450,13 +453,32 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 last_name__iexact=last_name.strip()
             ).first()
 
-        # ======================= USER LOGIN ==========================
+        # ======================= USER / EMPLOYER LOGIN (password on User) ==========================
         if user and user.check_password(password):
             attrs["username"] = user.email
             data = super().validate(attrs)
 
             refresh = self.get_token(user)
             access = refresh.access_token
+
+            employer = getattr(user, "employer", None)
+            if employer is not None:
+                logo_url = None
+                if employer.logo:
+                    try:
+                        logo_url = employer.logo.url
+                    except Exception:
+                        logo_url = None
+                data.update({
+                    "access": str(access),
+                    "refresh": str(refresh),
+                    "user_type": "employer",
+                    "company_name": employer.company_name,
+                    "email": employer.email,
+                    "phone_number": employer.phone_number,
+                    "logo": logo_url,
+                })
+                return data
 
             profile = getattr(user, "profile", None)
             phone_number = getattr(profile, "phone_number", None)
@@ -565,8 +587,10 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             setattr(instance, attr, val)
         instance.save()
 
-        # Only create/update UserProfile for regular users, not academies
-        if not Academy.objects.filter(user=instance).exists():
+        # Only create/update UserProfile for regular users, not academies or employers
+        if not Academy.objects.filter(user=instance).exists() and not Employer.objects.filter(
+            user=instance
+        ).exists():
             profile, _ = UserProfile.objects.get_or_create(user=instance)
             if "phone_number" in profile_data:
                 profile.phone_number = profile_data.get("phone_number")
@@ -624,7 +648,116 @@ class AcademyUpdateSerializer(serializers.ModelSerializer):
         return value
 
 
+class IndustrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Industry
+        fields = ["id", "name"]
 
+
+class TemporaryEmployerRegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TemporaryEmployer
+        fields = [
+            "company_name",
+            "email",
+            "password",
+            "phone_number",
+            "description",
+            "website",
+            "locations",
+            "number_of_employees",
+            "industry_names",
+        ]
+        extra_kwargs = {"password": {"write_only": True}}
+        validators = []
+
+    def create(self, validated_data):
+        validated_data["password"] = make_password(validated_data["password"])
+        return TemporaryEmployer.objects.create(**validated_data)
+
+
+class EmployerUpdateSerializer(serializers.ModelSerializer):
+    """
+    Company name is User.first_name. PATCH may send `name`, `company_name`, or `first_name`.
+    """
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(required=False, allow_blank=True, source="user.first_name")
+    email = serializers.EmailField(required=False, source="user.email")
+    industries = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Industry.objects.all(), required=False
+    )
+
+    class Meta:
+        model = Employer
+        fields = [
+            "id",
+            "name",
+            "email",
+            "phone_number",
+            "description",
+            "website",
+            "logo",
+            "locations",
+            "number_of_employees",
+            "industries",
+        ]
+        extra_kwargs = {
+            "phone_number": {"required": False},
+            "description": {"required": False},
+            "website": {"required": False},
+            "logo": {"required": False, "allow_null": True},
+            "locations": {"required": False},
+            "number_of_employees": {"required": False},
+        }
+
+    def to_internal_value(self, data):
+        if hasattr(data, "copy"):
+            data = data.copy()
+        if data.get("first_name") is not None and data.get("name") is None:
+            data["name"] = data.get("first_name")
+        if data.get("company_name") is not None and data.get("name") is None:
+            data["name"] = data.get("company_name")
+        return super().to_internal_value(data)
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", {})
+        industries = validated_data.pop("industries", serializers.empty)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if user_data:
+            for attr, value in user_data.items():
+                setattr(instance.user, attr, value)
+            instance.user.save()
+        if industries is not serializers.empty:
+            instance.industries.set(industries)
+        return instance
+
+    def validate_email(self, value):
+        instance = getattr(self, "instance", None)
+        if instance and instance.user_id:
+            if User.objects.exclude(pk=instance.user_id).filter(email__iexact=value).exists():
+                raise serializers.ValidationError("this mail already taken")
+        elif User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("this mail already taken")
+        return value
+
+
+class EmployerChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data["new_password"] != data["confirm_password"]:
+            raise serializers.ValidationError("Passwords do not match")
+        return data
+
+    def validate_old_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect")
+        return value
 
 
 #------------ User Change Password -------------------
@@ -710,7 +843,7 @@ class SocialLinksSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialLinks
         fields = "__all__"
-        read_only_fields = ["user", "academy"]
+        read_only_fields = ["user", "academy", "employer"]
 
 
 # --------------------------
