@@ -2332,7 +2332,7 @@ class AcademyProfileUpdateView(APIView):
 
 
 class IndustryListAPIView(APIView):
-    """GET /api/industries/ — list industry catalog for employer forms."""
+    """GET /api/industries/ — list industry catalog."""
 
     permission_classes = [permissions.AllowAny]
 
@@ -2346,11 +2346,7 @@ class EmployerProfileUpdateView(APIView):
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_employer(self, request):
-        return (
-            Employer.objects.filter(user=request.user)
-            .prefetch_related("industries")
-            .first()
-        )
+        return Employer.objects.filter(user=request.user).first()
 
     def get(self, request):
         employer = self.get_employer(request)
@@ -2359,32 +2355,17 @@ class EmployerProfileUpdateView(APIView):
 
         social_links, _ = SocialLinks.objects.get_or_create(employer=employer)
         social_data = SocialLinksSerializer(social_links).data
-
-        try:
-            logo_url = (
-                request.build_absolute_uri(employer.logo.url)
-                if employer.logo
-                else None
-            )
-        except Exception:
-            logo_url = None
-
-        industries = IndustrySerializer(employer.industries.all(), many=True).data
+        u = employer.user
 
         return Response(
             {
                 "id": employer.id,
-                "company_name": employer.company_name,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
                 "email": employer.email,
-                "phone_number": employer.phone_number,
-                "description": employer.description,
-                "website": employer.website,
-                "locations": employer.locations or [],
-                "number_of_employees": employer.number_of_employees,
-                "industries": industries,
+                "role_in_company": employer.role_in_company,
                 "is_verified": employer.is_verified,
                 "created_at": employer.created_at,
-                "logo": logo_url,
                 "social_links": social_data,
             }
         )
@@ -2416,32 +2397,17 @@ class EmployerProfileUpdateView(APIView):
             social_serializer.is_valid(raise_exception=True)
             social_serializer.save()
 
-        try:
-            logo_url = (
-                request.build_absolute_uri(employer.logo.url)
-                if employer.logo
-                else None
-            )
-        except Exception:
-            logo_url = None
-
-        industries = IndustrySerializer(employer.industries.all(), many=True).data
-
+        u = employer.user
         return Response(
             {
                 "message": "Employer profile updated successfully.",
                 "employer": {
                     "id": employer.id,
-                    "company_name": employer.company_name,
+                    "first_name": u.first_name,
+                    "last_name": u.last_name,
                     "email": employer.email,
-                    "phone_number": employer.phone_number,
-                    "description": employer.description,
-                    "website": employer.website,
-                    "locations": employer.locations or [],
-                    "number_of_employees": employer.number_of_employees,
-                    "industries": industries,
+                    "role_in_company": employer.role_in_company,
                     "is_verified": employer.is_verified,
-                    "logo": logo_url,
                 },
                 "social_links": SocialLinksSerializer(social_links).data,
             },
@@ -2451,19 +2417,22 @@ class EmployerProfileUpdateView(APIView):
 
 class EmployerLoginView(APIView):
     def post(self, request):
-        identifier = request.data.get("email")
+        identifier = (request.data.get("email") or "").strip()
         password = request.data.get("password")
 
         if not identifier or not password:
             return Response(
-                {"error": "Email (or company name) and password are required"},
+                {"error": "Email (or full name) and password are required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        employer = (
-            Employer.objects.filter(user__email__iexact=identifier).first()
-            or Employer.objects.filter(user__first_name__iexact=identifier).first()
-        )
+        employer = Employer.objects.filter(user__email__iexact=identifier).first()
+        if not employer and " " in identifier:
+            first_name, last_name = identifier.split(" ", 1)
+            employer = Employer.objects.filter(
+                user__first_name__iexact=first_name.strip(),
+                user__last_name__iexact=last_name.strip(),
+            ).first()
 
         if not employer:
             return Response({"error": "Employer not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -2476,6 +2445,7 @@ class EmployerLoginView(APIView):
 
         refresh = RefreshToken.for_user(employer.user)
         access = refresh.access_token
+        u = employer.user
 
         return Response(
             {
@@ -2484,11 +2454,10 @@ class EmployerLoginView(APIView):
                 "refresh": str(refresh),
                 "user_type": "employer",
                 "employer": {
-                    "company_name": employer.company_name,
+                    "first_name": u.first_name,
+                    "last_name": u.last_name,
                     "email": employer.email,
-                    "phone_number": employer.phone_number,
-                    "website": employer.website,
-                    "description": employer.description,
+                    "role_in_company": employer.role_in_company,
                 },
             },
             status=status.HTTP_200_OK,
@@ -2500,29 +2469,25 @@ class TemporaryEmployerRegisterView(generics.CreateAPIView):
     serializer_class = TemporaryEmployerRegisterSerializer
 
     def post(self, request):
-        email = request.data.get("email")
+        serializer = TemporaryEmployerRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        vd = serializer.validated_data
+        email = vd["email"]
+        pw_hash = make_password(vd["password"])
         temp = TemporaryEmployer.objects.filter(email=email).first()
 
         if temp:
-            temp.company_name = request.data.get("company_name")
-            temp.password = make_password(request.data.get("password"))
-            temp.phone_number = request.data.get("phone_number")
-            temp.description = request.data.get("description")
-            temp.website = request.data.get("website")
-            temp.locations = request.data.get("locations") or []
-            temp.number_of_employees = request.data.get("number_of_employees") or ""
-            temp.industry_names = request.data.get("industry_names") or []
+            temp.first_name = vd["first_name"]
+            temp.last_name = vd["last_name"]
+            temp.password = pw_hash
+            temp.role_in_company = vd.get("role_in_company") or ""
         else:
             temp = TemporaryEmployer.objects.create(
-                company_name=request.data.get("company_name"),
+                first_name=vd["first_name"],
+                last_name=vd["last_name"],
                 email=email,
-                password=make_password(request.data.get("password")),
-                phone_number=request.data.get("phone_number"),
-                description=request.data.get("description"),
-                website=request.data.get("website"),
-                locations=request.data.get("locations") or [],
-                number_of_employees=request.data.get("number_of_employees") or "",
-                industry_names=request.data.get("industry_names") or [],
+                password=pw_hash,
+                role_in_company=vd.get("role_in_company") or "",
             )
 
         temp.generate_verification_code()
@@ -2590,27 +2555,16 @@ class TemporaryEmployerVerifyView(APIView):
             username=temp.email,
             email=temp.email,
             password=temp.password,
-            first_name=temp.company_name,
-            last_name="",
+            first_name=temp.first_name,
+            last_name=temp.last_name,
             is_active=True,
         )
 
-        employer = Employer.objects.create(
+        Employer.objects.create(
             user=user,
-            phone_number=temp.phone_number or "",
-            description=temp.description or "No description provided",
-            website=temp.website,
-            locations=temp.locations if isinstance(temp.locations, list) else [],
-            number_of_employees=temp.number_of_employees or "",
+            role_in_company=temp.role_in_company or "",
             is_verified=True,
         )
-
-        for raw in temp.industry_names or []:
-            name = (str(raw) or "").strip()
-            if not name:
-                continue
-            industry, _ = Industry.objects.get_or_create(name=name)
-            employer.industries.add(industry)
 
         temp.delete()
 
@@ -2638,7 +2592,6 @@ class EmployerChangePasswordView(APIView):
                 "emails/password_changed.html",
                 {
                     "first_name": employer.user.first_name
-                    or employer.company_name
                     or employer.user.username,
                     "changed_at": timezone.now().strftime("%B %d, %Y at %I:%M %p"),
                     "logo_url": getattr(settings, "BRENEO_LOGO_URL", ""),
@@ -2648,7 +2601,6 @@ class EmployerChangePasswordView(APIView):
                 "emails/password_changed.txt",
                 {
                     "first_name": employer.user.first_name
-                    or employer.company_name
                     or employer.user.username,
                     "changed_at": timezone.now().strftime("%B %d, %Y at %I:%M %p"),
                 },

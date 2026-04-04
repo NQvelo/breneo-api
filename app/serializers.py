@@ -463,20 +463,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
             employer = getattr(user, "employer", None)
             if employer is not None:
-                logo_url = None
-                if employer.logo:
-                    try:
-                        logo_url = employer.logo.url
-                    except Exception:
-                        logo_url = None
                 data.update({
                     "access": str(access),
                     "refresh": str(refresh),
                     "user_type": "employer",
-                    "company_name": employer.company_name,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
                     "email": employer.email,
-                    "phone_number": employer.phone_number,
-                    "logo": logo_url,
+                    "role_in_company": employer.role_in_company,
                 })
                 return data
 
@@ -658,18 +652,28 @@ class TemporaryEmployerRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = TemporaryEmployer
         fields = [
-            "company_name",
+            "first_name",
+            "last_name",
             "email",
             "password",
-            "phone_number",
-            "description",
-            "website",
-            "locations",
-            "number_of_employees",
-            "industry_names",
+            "role_in_company",
         ]
-        extra_kwargs = {"password": {"write_only": True}}
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "role_in_company": {"required": False, "allow_blank": True},
+        }
         validators = []
+
+    def validate(self, attrs):
+        fn = (attrs.get("first_name") or "").strip()
+        ln = (attrs.get("last_name") or "").strip()
+        if not fn or not ln:
+            raise serializers.ValidationError(
+                "first_name and last_name are required."
+            )
+        attrs["first_name"] = fn
+        attrs["last_name"] = ln
+        return attrs
 
     def create(self, validated_data):
         validated_data["password"] = make_password(validated_data["password"])
@@ -677,51 +681,19 @@ class TemporaryEmployerRegisterSerializer(serializers.ModelSerializer):
 
 
 class EmployerUpdateSerializer(serializers.ModelSerializer):
-    """
-    Company name is User.first_name. PATCH may send `name`, `company_name`, or `first_name`.
-    """
+    """Personal name on User; role_in_company on Employer."""
     id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(required=False, allow_blank=True, source="user.first_name")
+    first_name = serializers.CharField(required=False, allow_blank=True, source="user.first_name")
+    last_name = serializers.CharField(required=False, allow_blank=True, source="user.last_name")
     email = serializers.EmailField(required=False, source="user.email")
-    industries = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Industry.objects.all(), required=False
-    )
 
     class Meta:
         model = Employer
-        fields = [
-            "id",
-            "name",
-            "email",
-            "phone_number",
-            "description",
-            "website",
-            "logo",
-            "locations",
-            "number_of_employees",
-            "industries",
-        ]
-        extra_kwargs = {
-            "phone_number": {"required": False},
-            "description": {"required": False},
-            "website": {"required": False},
-            "logo": {"required": False, "allow_null": True},
-            "locations": {"required": False},
-            "number_of_employees": {"required": False},
-        }
-
-    def to_internal_value(self, data):
-        if hasattr(data, "copy"):
-            data = data.copy()
-        if data.get("first_name") is not None and data.get("name") is None:
-            data["name"] = data.get("first_name")
-        if data.get("company_name") is not None and data.get("name") is None:
-            data["name"] = data.get("company_name")
-        return super().to_internal_value(data)
+        fields = ["id", "first_name", "last_name", "email", "role_in_company"]
+        extra_kwargs = {"role_in_company": {"required": False, "allow_blank": True}}
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
-        industries = validated_data.pop("industries", serializers.empty)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -729,8 +701,6 @@ class EmployerUpdateSerializer(serializers.ModelSerializer):
             for attr, value in user_data.items():
                 setattr(instance.user, attr, value)
             instance.user.save()
-        if industries is not serializers.empty:
-            instance.industries.set(industries)
         return instance
 
     def validate_email(self, value):

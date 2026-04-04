@@ -190,8 +190,8 @@ admin.site.register(TemporaryAcademy)
 
 @admin.register(TemporaryEmployer)
 class TemporaryEmployerAdmin(admin.ModelAdmin):
-    list_display = ("email", "company_name", "code_expires_at")
-    search_fields = ("email", "company_name")
+    list_display = ("email", "first_name", "last_name", "role_in_company", "code_expires_at")
+    search_fields = ("email", "first_name", "last_name")
 
 
 
@@ -226,20 +226,20 @@ class IndustryAdmin(admin.ModelAdmin):
 class EmployerAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "company_name_display",
+        "full_name_display",
         "user",
-        "phone_number",
-        "number_of_employees",
+        "role_in_company",
         "created_at",
     )
     list_filter = ("is_verified", "created_at")
-    search_fields = ("user__email", "user__first_name", "phone_number")
-    filter_horizontal = ("industries",)
+    search_fields = ("user__email", "user__first_name", "user__last_name", "role_in_company")
     readonly_fields = ("id", "created_at")
 
-    @admin.display(description="Company")
-    def company_name_display(self, obj):
-        return obj.company_name
+    @admin.display(description="Name")
+    def full_name_display(self, obj):
+        if obj.user_id:
+            return obj.user.get_full_name().strip() or obj.user.email
+        return "—"
 
 
 @admin.register(Course)
@@ -535,9 +535,7 @@ class UserAdmin(BaseUserAdmin):
     def get_fieldsets(self, request, obj=None):
         if not obj:
             return super().get_fieldsets(request, obj)
-        if Academy.objects.filter(user_id=obj.pk).exists() or Employer.objects.filter(
-            user_id=obj.pk
-        ).exists():
+        if Academy.objects.filter(user_id=obj.pk).exists():
             return (
                 (None, {"fields": ("username", "password")}),
                 (_("Personal info"), {"fields": ("first_name", "email")}),

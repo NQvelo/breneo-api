@@ -296,7 +296,7 @@ class SkillTestResult(models.Model):
 
 
 class Industry(models.Model):
-    """Catalog for employer industries (many-to-many on Employer)."""
+    """Industry catalog (optional; not linked to Employer profiles)."""
 
     name = models.CharField(max_length=200, unique=True)
 
@@ -336,48 +336,34 @@ class Academy(models.Model):
 
 class Employer(models.Model):
     """
-    Employer org profile: company name lives on User.first_name (see company_name / name).
-    Authentication uses the linked User account password (no separate Employer.password field).
+    Employer account: personal name on User (first_name, last_name); role at work on Employer.
+    Authentication uses the linked User password (no separate Employer.password field).
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="employer")
-    phone_number = models.CharField(max_length=20)
-    description = models.TextField(default="No description provided")
-    website = models.URLField(blank=True, null=True)
-    logo = models.ImageField(
-        storage=MediaCloudinaryStorage(),
-        upload_to="employer_logos/",
-        blank=True,
-        null=True,
-    )
-    locations = models.JSONField(
-        default=list,
-        blank=True,
-        help_text='List of strings, e.g. ["Tbilisi, Georgia", "Remote"]',
-    )
-    number_of_employees = models.CharField(
-        max_length=100,
+    role_in_company = models.CharField(
+        max_length=255,
         blank=True,
         default="",
-        help_text='e.g. "1-10", "11-50", "1000+"',
+        help_text="Job title or role (e.g. HR Manager, Founder).",
     )
-    industries = models.ManyToManyField(Industry, related_name="employers", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
-
-    @property
-    def company_name(self):
-        return self.user.first_name if self.user else "Unknown Company"
-
-    @property
-    def name(self):
-        return self.company_name
 
     @property
     def email(self):
         return self.user.email if self.user else ""
 
+    @property
+    def full_name(self):
+        if not self.user_id:
+            return ""
+        return (self.user.get_full_name() or "").strip()
+
     def __str__(self):
-        return self.company_name
+        if self.user_id:
+            name = self.full_name
+            return name or self.user.email or str(self.pk)
+        return f"Employer #{self.pk}"
 
 
 
@@ -439,20 +425,12 @@ class TemporaryUser(models.Model):
 
 
 class TemporaryEmployer(models.Model):
-    """Pre-verification employer signup (mirrors TemporaryAcademy)."""
-    company_name = models.CharField(max_length=255)
+    """Pre-verification employer signup: personal name + email + optional role."""
+    first_name = models.CharField(max_length=150, default="")
+    last_name = models.CharField(max_length=150, default="")
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    website = models.URLField(blank=True, null=True)
-    locations = models.JSONField(default=list, blank=True)
-    number_of_employees = models.CharField(max_length=100, blank=True, default="")
-    industry_names = models.JSONField(
-        default=list,
-        blank=True,
-        help_text="List of industry name strings; Industry rows are created/linked on verify.",
-    )
+    role_in_company = models.CharField(max_length=255, blank=True, default="")
     verification_code = models.CharField(max_length=6, blank=True, null=True)
     code_expires_at = models.DateTimeField(blank=True, null=True)
 
@@ -543,8 +521,9 @@ class SocialLinks(models.Model):
             return f"{self.user.username}'s Social Links"
         elif self.academy:
             return f"{self.academy.name}'s Social Links"
-        elif self.employer_id:
-            return f"{self.employer.company_name}'s Social Links"
+        elif self.employer_id and self.employer.user_id:
+            name = self.employer.user.get_full_name().strip() or self.employer.user.email
+            return f"{name}'s Social Links"
         return "Unknown Social Links"
 
 
