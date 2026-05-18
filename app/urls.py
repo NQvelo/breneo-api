@@ -42,6 +42,7 @@ from .views import (
     AcademyLoginView,
     AcademyDetailView,
     UserProfileDetailView,
+    PublicUserProfileView,
     toggle_save_course,
     toggle_save_job,
     toggle_save_course_academy,
@@ -152,6 +153,11 @@ urlpatterns = [
     path("api/me/skills/<int:skill_id>/", UserSkillDetachView.as_view(), name="me-skills-detach"),
 
     # -------------Details --------------
+    path(
+        "api/users/<int:user_id>/profile/",
+        PublicUserProfileView.as_view(),
+        name="public-user-profile",
+    ),
     path('api/user/<int:user_id>/', UserProfileDetailView.as_view(), name='user-public-profile'),
     path("api/academy/<int:academy_id>/", AcademyDetailView.as_view(), name="academy-detail"),
 

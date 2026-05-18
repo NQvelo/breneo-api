@@ -54,6 +54,7 @@ from .serializers import (
     AcademyDetailSerializer,
     CareerQuestionSerializer,
     UserProfileSerializer,
+    PublicSocialLinksSerializer,
     EducationSerializer,
     WorkExperienceSerializer,
     SkillSearchSerializer,
@@ -2136,6 +2137,11 @@ class EducationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Education.objects.filter(user=self.request.user).order_by("-start_date")
 
+    def _ensure_owner(self, instance):
+        if instance.user_id != self.request.user.pk:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only modify your own education entries.")
+
     def perform_create(self, serializer):
         user = self.request.user
         if Education.objects.filter(user=user).count() >= MAX_EDUCATIONS:
@@ -2144,6 +2150,14 @@ class EducationViewSet(viewsets.ModelViewSet):
                 {"detail": f"Maximum {MAX_EDUCATIONS} education entries allowed per user."}
             )
         serializer.save(user=user)
+
+    def perform_update(self, serializer):
+        self._ensure_owner(serializer.instance)
+        serializer.save(user=self.request.user)
+
+    def perform_destroy(self, instance):
+        self._ensure_owner(instance)
+        instance.delete()
 
 
 class WorkExperienceViewSet(viewsets.ModelViewSet):
@@ -2155,6 +2169,11 @@ class WorkExperienceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return WorkExperience.objects.filter(user=self.request.user).order_by("-start_date")
 
+    def _ensure_owner(self, instance):
+        if instance.user_id != self.request.user.pk:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only modify your own work experience entries.")
+
     def perform_create(self, serializer):
         user = self.request.user
         if WorkExperience.objects.filter(user=user).count() >= MAX_WORK_EXPERIENCES:
@@ -2163,6 +2182,14 @@ class WorkExperienceViewSet(viewsets.ModelViewSet):
                 {"detail": f"Maximum {MAX_WORK_EXPERIENCES} work experience entries allowed per user."}
             )
         serializer.save(user=user)
+
+    def perform_update(self, serializer):
+        self._ensure_owner(serializer.instance)
+        serializer.save(user=self.request.user)
+
+    def perform_destroy(self, instance):
+        self._ensure_owner(instance)
+        instance.delete()
 
 
 # ---------------- /api/skills?query= & /api/me/skills ----------------
@@ -2184,6 +2211,7 @@ class UserSkillListAttachView(APIView):
     """GET /api/me/skills - list current user's skills. POST - attach skill by name. Requires JWT."""
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "post", "head", "options"]
 
     def get(self, request):
         """List all skills attached to the current user."""
@@ -2218,12 +2246,16 @@ class UserSkillDetachView(APIView):
     """DELETE /api/me/skills/<skill_id> - Removes UserSkill for request.user + skill_id. Requires JWT."""
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["delete", "head", "options"]
 
     def delete(self, request, skill_id):
         deleted, _ = UserSkill.objects.filter(user=request.user, skill_id=skill_id).delete()
-        return Response(
-            status=status.HTTP_204_NO_CONTENT,
-        )
+        if not deleted:
+            return Response(
+                {"detail": "Skill not found on your profile."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -2969,10 +3001,113 @@ class AcademyChangePasswordView(APIView):
 
 
 
+# ----------------- Public user profile (no auth) ------------------
+
+
+EMPTY_PUBLIC_SOCIAL_LINKS = {
+    "github": None,
+    "linkedin": None,
+    "facebook": None,
+    "instagram": None,
+    "dribbble": None,
+    "behance": None,
+}
+
+
+class ReadOnlyPublicAPIView(APIView):
+    """GET-only, unauthenticated reads. Rejects POST/PUT/PATCH/DELETE with 405."""
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["get", "head", "options"]
+
+
+def _absolute_profile_image_url(request, profile):
+    if not profile or not profile.profile_image:
+        return None
+    try:
+        return request.build_absolute_uri(profile.profile_image.url)
+    except Exception:
+        return None
+
+
+def _get_regular_user_or_none(user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return None
+    if Academy.objects.filter(user=user).exists():
+        return None
+    if Employer.objects.filter(user=user).exists():
+        return None
+    return user
+
+
+def _build_public_user_profile_payload(user, request):
+    """Read-only aggregate; never creates or mutates profile rows."""
+    profile = UserProfile.objects.filter(user=user).first()
+    social_links = SocialLinks.objects.filter(user=user).first()
+
+    educations = Education.objects.filter(user=user).order_by("-start_date")
+    work_experiences = WorkExperience.objects.filter(user=user).order_by("-start_date")
+    user_skills = UserSkill.objects.filter(user=user).select_related("skill").order_by("-created_at")
+
+    try:
+        industry_profile = UserIndustryProfile.objects.get(user=user)
+        industry_data = {
+            "industry_years_json": industry_profile.industry_years_json,
+            "updated_at": industry_profile.updated_at.isoformat(),
+        }
+    except UserIndustryProfile.DoesNotExist:
+        industry_data = {
+            "industry_years_json": {},
+            "updated_at": None,
+        }
+
+    last_result = SkillTestResult.objects.filter(user=user).order_by("-created_at").first()
+
+    return {
+        "id": user.id,
+        "first_name": user.first_name or "",
+        "last_name": user.last_name or "",
+        "email": user.email,
+        "phone_number": (profile.phone_number if profile else None) or "",
+        "country_region": (getattr(profile, "country_region", "") if profile else "") or "",
+        "city": (getattr(profile, "city", "") if profile else "") or "",
+        "about_me": (profile.about_me if profile else None) or "",
+        "profile_image": _absolute_profile_image_url(request, profile),
+        "social_links": (
+            PublicSocialLinksSerializer(social_links).data
+            if social_links
+            else EMPTY_PUBLIC_SOCIAL_LINKS
+        ),
+        "educations": EducationSerializer(educations, many=True).data,
+        "work_experiences": WorkExperienceSerializer(work_experiences, many=True).data,
+        "skills": UserSkillResponseSerializer(user_skills, many=True).data,
+        "industry_profile": industry_data,
+        "career": {
+            "final_role": last_result.final_role if last_result else None,
+            "total_score": last_result.total_score if last_result else None,
+            "skills_json": last_result.skills_json if last_result else {},
+        },
+    }
+
+
+class PublicUserProfileView(ReadOnlyPublicAPIView):
+    """
+    GET /api/users/<user_id>/profile/
+    Full public profile for a regular user (no JWT required). Read-only.
+    """
+
+    def get(self, request, user_id):
+        user = _get_regular_user_or_none(user_id)
+        if user is None:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(_build_public_user_profile_payload(user, request))
+
+
 # -----------------User Detail View ------------------
 
 
-class UserProfileDetailView(APIView):
+class UserProfileDetailView(ReadOnlyPublicAPIView):
     def get(self, request, user_id):
         try:
             profile = UserProfile.objects.get(id=user_id)
@@ -2989,8 +3124,12 @@ class UserProfileDetailView(APIView):
 
         serializer = UserProfileSerializer(profile, context={"request": request})
 
-        social_links, _ = SocialLinks.objects.get_or_create(user=profile.user)
-        social_serializer = SocialLinksSerializer(social_links)
+        social_links = SocialLinks.objects.filter(user=profile.user).first()
+        social_data = (
+            PublicSocialLinksSerializer(social_links).data
+            if social_links
+            else EMPTY_PUBLIC_SOCIAL_LINKS
+        )
 
         last_result = SkillTestResult.objects.filter(user=profile.user).order_by('-created_at').first()
         final_role = last_result.final_role if last_result else None
@@ -3039,7 +3178,7 @@ class UserProfileDetailView(APIView):
             "recommended_jobs": recommended_jobs,
             "saved_courses": list(saved_courses),
             "saved_jobs": list(saved_jobs),
-            "social_links": social_serializer.data,
+            "social_links": social_data,
             "missing_skills": user_missing_skills,
         }, status=status.HTTP_200_OK)
 
@@ -3048,7 +3187,7 @@ class UserProfileDetailView(APIView):
 
 # ----------------- Academy Detail View ------------------
 
-class AcademyDetailView(APIView):
+class AcademyDetailView(ReadOnlyPublicAPIView):
     def get(self, request, academy_id):
         try:
             academy = Academy.objects.get(id=academy_id)
@@ -3058,9 +3197,12 @@ class AcademyDetailView(APIView):
        
         serializer = AcademyDetailSerializer(academy, context={"request": request})
 
-        
-        social_links, _ = SocialLinks.objects.get_or_create(academy=academy)
-        social_serializer = SocialLinksSerializer(social_links)
+        social_links = SocialLinks.objects.filter(academy=academy).first()
+        social_data = (
+            PublicSocialLinksSerializer(social_links).data
+            if social_links
+            else EMPTY_PUBLIC_SOCIAL_LINKS
+        )
 
         
         academy_courses = Course.objects.filter(academy=academy)
@@ -3078,7 +3220,7 @@ class AcademyDetailView(APIView):
             "recommended_jobs": [],                
             "saved_courses": list(saved_courses),
             "saved_jobs": list(saved_jobs),
-            "social_links": social_serializer.data,
+            "social_links": social_data,
             "missing_skills": []                  
         }, status=status.HTTP_200_OK)
 

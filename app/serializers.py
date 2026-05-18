@@ -816,6 +816,19 @@ class SocialLinksSerializer(serializers.ModelSerializer):
         read_only_fields = ["user", "academy", "employer"]
 
 
+class PublicSocialLinksSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLinks
+        fields = [
+            "github",
+            "linkedin",
+            "facebook",
+            "instagram",
+            "dribbble",
+            "behance",
+        ]
+
+
 # --------------------------
 # Personal profile (User + UserProfile + social_links)
 # --------------------------
