@@ -70,6 +70,13 @@ from .views import (
     TemporaryEmployerVerifyView,
     EmployerChangePasswordView,
 )
+from .notification_views import (
+    InternalNotificationCreateView,
+    MeJobNotificationView,
+    MeNotificationListCreateView,
+    MeNotificationMarkReadView,
+    MeNotificationReadAllView,
+)
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -186,6 +193,33 @@ urlpatterns = [
     path("api/subscription-plans/", SubscriptionPlanListView.as_view()),
     path("api/me/subscription/", UserSubscriptionView.as_view()),
     path("api/me/payment-history/", PaymentHistoryView.as_view()),
+
+    # ----------- Notifications (JWT user + BFF internal) -----------
+    path(
+        "api/me/notifications/",
+        MeNotificationListCreateView.as_view(),
+        name="me-notifications",
+    ),
+    path(
+        "api/me/notifications/read-all/",
+        MeNotificationReadAllView.as_view(),
+        name="me-notifications-read-all",
+    ),
+    path(
+        "api/me/notifications/<int:pk>/read/",
+        MeNotificationMarkReadView.as_view(),
+        name="me-notification-mark-read",
+    ),
+    path(
+        "api/me/job-notifications/",
+        MeJobNotificationView.as_view(),
+        name="me-job-notifications",
+    ),
+    path(
+        "api/internal/notifications/",
+        InternalNotificationCreateView.as_view(),
+        name="internal-notifications",
+    ),
 ] 
 
 

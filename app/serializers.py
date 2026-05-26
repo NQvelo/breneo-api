@@ -26,6 +26,8 @@ from .models import (
     Skill,
     UserSkill,
     SubscriptionPlan,
+    Notification,
+    JobNotification,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
@@ -978,4 +980,125 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
         fields = ["id", "name", "price", "duration_days", "description"]
+
+
+# ---------------- Notifications ----------------
+
+
+def _notification_kind_from_metadata(metadata, explicit_kind=""):
+    if explicit_kind:
+        return explicit_kind
+    if isinstance(metadata, dict):
+        return metadata.get("kind") or ""
+    return ""
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    recipient_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "title",
+            "message",
+            "type",
+            "recipient_id",
+            "is_read",
+            "kind",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+    def get_recipient_id(self, obj):
+        if obj.recipient_id is None:
+            return None
+        return str(obj.recipient_id)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["id"] = str(instance.pk)
+        return data
+
+
+class NotificationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ["title", "message", "type", "kind", "metadata"]
+
+    def validate_type(self, value):
+        allowed = {c[0] for c in Notification.TYPE_CHOICES}
+        if value not in allowed:
+            raise serializers.ValidationError(
+                f"type must be one of: {', '.join(sorted(allowed))}"
+            )
+        return value
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        metadata = validated_data.pop("metadata", None) or {}
+        if not isinstance(metadata, dict):
+            metadata = {}
+        kind = _notification_kind_from_metadata(
+            metadata, validated_data.pop("kind", "") or ""
+        )
+        return Notification.objects.create(
+            recipient=request.user,
+            kind=kind,
+            metadata=metadata,
+            **validated_data,
+        )
+
+
+class InternalNotificationCreateSerializer(serializers.Serializer):
+    recipient_id = serializers.CharField()
+    title = serializers.CharField(max_length=255)
+    message = serializers.CharField()
+    type = serializers.ChoiceField(choices=Notification.TYPE_CHOICES, default="info")
+    kind = serializers.CharField(max_length=64, required=False, allow_blank=True, default="")
+    metadata = serializers.JSONField(required=False, default=dict)
+
+    def validate_recipient_id(self, value):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        try:
+            pk = int(value)
+        except (TypeError, ValueError):
+            raise serializers.ValidationError("recipient_id must be a valid user id.")
+        if not User.objects.filter(pk=pk).exists():
+            raise serializers.ValidationError("User not found.")
+        return pk
+
+    def validate_metadata(self, value):
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("metadata must be a JSON object.")
+        return value
+
+    def create(self, validated_data):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        recipient = User.objects.get(pk=validated_data["recipient_id"])
+        metadata = validated_data.get("metadata") or {}
+        kind = _notification_kind_from_metadata(
+            metadata, validated_data.get("kind") or ""
+        )
+        return Notification.objects.create(
+            recipient=recipient,
+            title=validated_data["title"],
+            message=validated_data["message"],
+            type=validated_data["type"],
+            kind=kind,
+            metadata=metadata,
+            is_read=False,
+        )
+
+
+class JobNotificationCreateSerializer(serializers.Serializer):
+    job_id = serializers.CharField(max_length=128)
 

@@ -698,3 +698,57 @@ class PaymentHistory(models.Model):
 
     def __str__(self):
         return f"Payment {self.order_id} - {self.status}"
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ("info", "Info"),
+        ("success", "Success"),
+        ("warning", "Warning"),
+        ("error", "Error"),
+    ]
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="info")
+    is_read = models.BooleanField(default=False)
+    kind = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient", "-created_at"]),
+            models.Index(fields=["recipient", "is_read"]),
+            models.Index(fields=["recipient", "kind", "-created_at"]),
+        ]
+
+    def __str__(self):
+        target = self.recipient_id or "broadcast"
+        return f"Notification {self.pk} → {target}: {self.title[:40]}"
+
+
+class JobNotification(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="job_notifications",
+    )
+    job_id = models.CharField(max_length=128)
+    notified_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "job_id")]
+        indexes = [models.Index(fields=["user"])]
+
+    def __str__(self):
+        return f"{self.user_id} notified for job {self.job_id}"

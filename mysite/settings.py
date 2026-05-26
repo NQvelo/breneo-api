@@ -241,6 +241,9 @@ BOG_SUBSCRIBE_URL = os.getenv("BOG_SUBSCRIBE_URL")
 BOG_CALLBACK_URL = os.getenv("BOG_CALLBACK_URL", "https://web-production-80ed8.up.railway.app/api/bog/callback/")
 BOG_CALLBACK_SECRET_PUBLIC_KEY = os.getenv("BOG_CALLBACK_SECRET_PUBLIC_KEY")
 
+# ----------- Notifications (BFF internal + SPA user endpoints) -----------
+NOTIFICATIONS_INTERNAL_KEY = os.environ.get("NOTIFICATIONS_INTERNAL_KEY", "")
+
 # ----------- Debug: log all errors with traceback to console -----------
 import sys
 LOGGING = {

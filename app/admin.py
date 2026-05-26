@@ -44,6 +44,8 @@ from .models import (
     UserSubscription,
     SubscriptionPlan,
     PaymentHistory,
+    Notification,
+    JobNotification,
 )
 
 
@@ -523,6 +525,24 @@ class PaymentHistoryAdmin(admin.ModelAdmin):
     search_fields = ("order_id", "user__email", "card_mask")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "recipient", "type", "kind", "is_read", "created_at")
+    list_filter = ("type", "kind", "is_read", "created_at")
+    search_fields = ("title", "message", "recipient__email", "recipient__username")
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
+
+
+@admin.register(JobNotification)
+class JobNotificationAdmin(admin.ModelAdmin):
+    list_display = ("user", "job_id", "notified_at")
+    list_filter = ("notified_at",)
+    search_fields = ("job_id", "user__email", "user__username")
+    readonly_fields = ("notified_at",)
+    ordering = ("-notified_at",)
 
 
 # Academy users: display name is User.first_name only (Academy.name); hide last_name in admin.
