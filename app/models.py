@@ -92,18 +92,11 @@ class Job(models.Model):
 class Profession(models.Model):
     """
     Career profession based on skills. Populated via fetch_profession_data command.
-    - salary_info: JSON object with salaries by country e.g.
-      {"US": {"min": 70000, "max": 120000, "currency": "USD", "display": "$70,000 - $120,000"},
-       "Germany": {...}, "Georgia": {...}, "Turkey": {...}, "UK": {...}, "Other": {...}}
     - market_popularity: JSON for charts e.g. [{"year": "2020", "value": 75}, ...]
     """
     title = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True, default="")
     skills = models.ManyToManyField(Skill, related_name="professions", blank=True)
-    salary_info = models.JSONField(
-        default=dict,
-        help_text='Object: US, Germany, Georgia, Turkey, UK, Other -> {min, max, currency, display}'
-    )
     market_popularity = models.JSONField(
         default=list,
         help_text='[{"year": "2020", "value": 75}, {"year": "2021", "value": 80}, ...] for charts'
@@ -752,3 +745,72 @@ class JobNotification(models.Model):
 
     def __str__(self):
         return f"{self.user_id} notified for job {self.job_id}"
+
+
+class Atom(models.Model):
+    """A single ~3-minute micro-lesson made of story-like cards ending in a quiz."""
+
+    profession = models.ForeignKey(
+        Profession,
+        on_delete=models.CASCADE,
+        related_name="atoms",
+    )
+    title = models.CharField(max_length=255)
+    sequence_order = models.PositiveIntegerField(
+        help_text="Strict ordering within the profession path (1 = first atom).",
+    )
+    content_cards = models.JSONField(default=list, blank=True)
+    quiz_data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["profession", "sequence_order"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["profession", "sequence_order"],
+                name="unique_atom_sequence_per_profession",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["profession", "sequence_order"]),
+        ]
+
+    def __str__(self):
+        return f"{self.profession.title} — #{self.sequence_order}: {self.title}"
+
+
+class UserProgress(models.Model):
+    """Tracks a user's completion state for a single Atom."""
+
+    PASS_THRESHOLD = 80.0
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="atom_progress",
+    )
+    atom = models.ForeignKey(
+        Atom,
+        on_delete=models.CASCADE,
+        related_name="user_progress",
+    )
+    score_percentage = models.FloatField(default=0.0)
+    is_completed = models.BooleanField(default=False)
+    requires_retake = models.BooleanField(default=False)
+    last_attempted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "atom"],
+                name="unique_user_atom_progress",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "atom"]),
+            models.Index(fields=["user", "is_completed"]),
+        ]
+
+    def __str__(self):
+        return f"User {self.user_id} — Atom {self.atom_id}: {self.score_percentage}%"

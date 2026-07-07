@@ -1,11 +1,7 @@
 """
-Fetch and populate Profession data: description, salary, market popularity.
+Fetch and populate Profession data: description, market popularity.
 Uses Groq AI (GROQ_API_KEY). Auto-links relevant_courses by matching profession
 skills with course skills_taught.
-
-Optional APIs for real data (add to .env when available):
-- BLS API: https://www.bls.gov/developers/ - Occupational Employment & Wages
-- CareerOneStop: https://careeronestop.org/Developers/WebAPI/ - Salary by occupation
 
 Run: python manage.py fetch_profession_data
       python manage.py fetch_profession_data --skip-groq   # use defaults, no API
@@ -13,7 +9,6 @@ Run: python manage.py fetch_profession_data
 """
 import json
 import os
-import re
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -68,63 +63,8 @@ def fetch_from_groq(prompt: str, fallback: str = "") -> str:
         return fallback
 
 
-SALARY_REGIONS = ["US", "Germany", "Georgia", "Turkey", "UK", "Other"]
-
-
-def parse_salary_entry(text: str, currency: str = "USD", symbol: str = "$") -> dict:
-    """Parse salary string like '$70,000 - $120,000' into {min, max, currency, display}."""
-    text = text or ""
-    nums = [int(m.replace(",", "")) for m in re.findall(r"\d{1,3}(?:,\d{3})*", text)]
-    if len(nums) >= 2:
-        lo, hi = min(nums), max(nums)
-        return {"min": lo, "max": hi, "currency": currency, "display": f"{symbol}{lo:,} - {symbol}{hi:,}"}
-    if len(nums) == 1:
-        return {"min": nums[0], "max": nums[0], "currency": currency, "display": f"{symbol}{nums[0]:,}"}
-    return {"min": 0, "max": 0, "currency": currency, "display": "N/A"}
-
-
-def build_salary_info_object(prompt_response: str, title: str) -> dict:
-    """
-    Parse Groq response into salary_info object: {US: {...}, Germany: {...}, ...}
-    Falls back to defaults if parsing fails.
-    """
-    symbols = {"US": "$", "Germany": "€", "Georgia": "₾", "Turkey": "₺", "UK": "£", "Other": "$"}
-    currencies = {"US": "USD", "Germany": "EUR", "Georgia": "GEL", "Turkey": "TRY", "UK": "GBP", "Other": "USD"}
-    defaults = {
-        "US": {"min": 70000, "max": 120000, "currency": "USD", "display": "$70,000 - $120,000"},
-        "Germany": {"min": 55000, "max": 95000, "currency": "EUR", "display": "€55,000 - €95,000"},
-        "Georgia": {"min": 18000, "max": 45000, "currency": "GEL", "display": "₾18,000 - ₾45,000"},
-        "Turkey": {"min": 300000, "max": 700000, "currency": "TRY", "display": "₺300,000 - ₺700,000"},
-        "UK": {"min": 45000, "max": 90000, "currency": "GBP", "display": "£45,000 - £90,000"},
-        "Other": {"min": 40000, "max": 80000, "currency": "USD", "display": "$40,000 - $80,000"},
-    }
-    try:
-        start = prompt_response.find("{")
-        end = prompt_response.rfind("}") + 1
-        if start >= 0 and end > start:
-            obj = json.loads(prompt_response[start:end])
-            out = {}
-            for region in SALARY_REGIONS:
-                val = obj.get(region, obj.get(region.lower(), defaults[region]))
-                if isinstance(val, dict) and "min" in val and "max" in val:
-                    sym = symbols.get(region, "$")
-                    cur = val.get("currency", currencies.get(region, "USD"))
-                    out[region] = {
-                        "min": int(val["min"]),
-                        "max": int(val["max"]),
-                        "currency": cur,
-                        "display": val.get("display", f"{sym}{val['min']:,} - {sym}{val['max']:,}"),
-                    }
-                else:
-                    out[region] = defaults[region]
-            return out
-    except Exception:
-        pass
-    return defaults
-
-
 class Command(BaseCommand):
-    help = "Fetch description, salary, market popularity for professions; auto-link courses"
+    help = "Fetch description and market popularity for professions; auto-link courses"
 
     def add_arguments(self, parser):
         parser.add_argument("--dry-run", action="store_true", help="Don't save, just print")
@@ -173,27 +113,6 @@ class Command(BaseCommand):
                     fallback=f"{title} is a career path.",
                 )
                 description = desc[:2000] if desc else ""
-
-            # Fetch salary (one object: US, Germany, Georgia, Turkey, UK, Other)
-            if skip_groq:
-                salary_info = {
-                    "US": {"min": 70000, "max": 120000, "currency": "USD", "display": "$70,000 - $120,000"},
-                    "Germany": {"min": 55000, "max": 95000, "currency": "EUR", "display": "€55,000 - €95,000"},
-                    "Georgia": {"min": 18000, "max": 45000, "currency": "GEL", "display": "₾18,000 - ₾45,000"},
-                    "Turkey": {"min": 300000, "max": 700000, "currency": "TRY", "display": "₺300,000 - ₺700,000"},
-                    "UK": {"min": 45000, "max": 90000, "currency": "GBP", "display": "£45,000 - £90,000"},
-                    "Other": {"min": 40000, "max": 80000, "currency": "USD", "display": "$40,000 - $80,000"},
-                }
-            else:
-                sal_prompt = (
-                    f"For a {title} with mid-level experience, provide yearly salary ranges for these regions. "
-                    "Return a single JSON object with keys: US, Germany, Georgia, Turkey, UK, Other. "
-                    "Each value: {{\"min\": number, \"max\": number, \"currency\": \"XXX\", \"display\": \"formatted string\"}}. "
-                    "Use: USD/$ for US, EUR/€ for Germany, GEL/₾ for Georgia, TRY/₺ for Turkey, GBP/£ for UK. "
-                    "Other = global average in USD. Example: {{\"US\": {{\"min\": 70000, \"max\": 120000, \"currency\": \"USD\", \"display\": \"$70,000 - $120,000\"}}, ...}}"
-                )
-                sal_text = fetch_from_groq(sal_prompt, fallback="{}")
-                salary_info = build_salary_info_object(sal_text, title)
 
             # Fetch market popularity (5-year trend for charts)
             if skip_groq:
@@ -246,7 +165,6 @@ class Command(BaseCommand):
                     title=title,
                     defaults={
                         "description": description,
-                        "salary_info": salary_info,
                         "market_popularity": market_popularity,
                     },
                 )

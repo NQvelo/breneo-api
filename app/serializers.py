@@ -131,7 +131,7 @@ class QuestionSoftSkillsSerializer(serializers.ModelSerializer):
 
 
 class ProfessionSerializer(serializers.ModelSerializer):
-    """Full profession info: title, description, skills, salary_info, market_popularity, relevant_courses."""
+    """Full profession info: title, description, skills, market_popularity, relevant_courses."""
     skills = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     relevant_courses = serializers.SlugRelatedField(many=True, read_only=True, slug_field="title")
 
@@ -142,7 +142,6 @@ class ProfessionSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "skills",
-            "salary_info",
             "market_popularity",
             "relevant_courses",
             "created_at",

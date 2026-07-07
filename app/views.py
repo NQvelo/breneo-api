@@ -739,7 +739,7 @@ class CareerCategoryListAPIView(generics.ListAPIView):
 
 
 class ProfessionListAPIView(generics.ListAPIView):
-    """GET /api/professions/ - list all professions with salary, market_popularity (chart data), skills, courses."""
+    """GET /api/professions/ - list all professions with market_popularity (chart data), skills, courses."""
     queryset = Profession.objects.all().prefetch_related("skills", "relevant_courses")
     serializer_class = ProfessionSerializer
     authentication_classes = [JWTAuthentication]
@@ -749,7 +749,7 @@ class ProfessionListAPIView(generics.ListAPIView):
 class MyProfessionAssignmentsAPIView(generics.ListAPIView):
     """
     GET /api/me/profession/ — current user's matched professions with full profession details.
-    Requires auth. Each item includes: profession (id, title, description, skills, salary_info,
+    Requires auth. Each item includes: profession (id, title, description, skills,
     market_popularity, relevant_courses, created_at, updated_at), match_score, created_at.
     Ordered by match_score descending.
     """

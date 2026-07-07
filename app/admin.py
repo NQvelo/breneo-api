@@ -46,6 +46,8 @@ from .models import (
     PaymentHistory,
     Notification,
     JobNotification,
+    Atom,
+    UserProgress,
 )
 
 
@@ -302,6 +304,12 @@ class DynamicSoftSkillsQuestionAdmin(admin.ModelAdmin):
     search_fields = ('questiontext', 'skill', 'RoleMapping')
 
 
+class AtomInline(admin.TabularInline):
+    model = Atom
+    extra = 0
+    fields = ("title", "sequence_order", "content_cards", "quiz_data")
+    ordering = ("sequence_order",)
+
 
 @admin.register(Profession)
 class ProfessionAdmin(admin.ModelAdmin):
@@ -309,6 +317,7 @@ class ProfessionAdmin(admin.ModelAdmin):
     search_fields = ("title", "description")
     filter_horizontal = ("skills", "relevant_courses")
     readonly_fields = ("created_at", "updated_at")
+    inlines = [AtomInline]
 
 
 @admin.register(ProfessionOfUser)
@@ -543,6 +552,30 @@ class JobNotificationAdmin(admin.ModelAdmin):
     search_fields = ("job_id", "user__email", "user__username")
     readonly_fields = ("notified_at",)
     ordering = ("-notified_at",)
+
+
+@admin.register(Atom)
+class AtomAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "profession", "sequence_order", "updated_at")
+    list_filter = ("profession",)
+    search_fields = ("title", "profession__title")
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("profession", "sequence_order")
+
+
+@admin.register(UserProgress)
+class UserProgressAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "atom",
+        "score_percentage",
+        "is_completed",
+        "requires_retake",
+        "last_attempted_at",
+    )
+    list_filter = ("is_completed", "requires_retake")
+    search_fields = ("user__email", "user__username", "atom__title")
+    readonly_fields = ("last_attempted_at",)
 
 
 # Academy users: display name is User.first_name only (Academy.name); hide last_name in admin.

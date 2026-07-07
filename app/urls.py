@@ -77,6 +77,7 @@ from .notification_views import (
     MeNotificationMarkReadView,
     MeNotificationReadAllView,
 )
+from .atom_views import AtomSubmitView, ProfessionNextAtomView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -220,7 +221,19 @@ urlpatterns = [
         InternalNotificationCreateView.as_view(),
         name="internal-notifications",
     ),
-] 
+
+    # ----------- Atoms micro-learning (v1) -----------
+    path(
+        "api/v1/professions/<int:profession_id>/next-atom/",
+        ProfessionNextAtomView.as_view(),
+        name="profession-next-atom",
+    ),
+    path(
+        "api/v1/atoms/<int:atom_id>/submit/",
+        AtomSubmitView.as_view(),
+        name="atom-submit",
+    ),
+]
 
 
 if settings.DEBUG:
