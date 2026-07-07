@@ -25,7 +25,7 @@ SAMPLE_QUIZ = {
 }
 
 
-def _create_profession_with_atoms(title="Frontend Developer"):
+def _create_profession_with_atoms(title="Atom Test Profession"):
     profession = Profession.objects.create(
         title=title,
         description="Intro to React",
