@@ -77,7 +77,12 @@ from .notification_views import (
     MeNotificationMarkReadView,
     MeNotificationReadAllView,
 )
-from .atom_views import AtomSubmitView, ProfessionNextAtomView
+from .atom_views import (
+    AtomDetailView,
+    AtomSubmitView,
+    ProfessionAtomsListView,
+    ProfessionNextAtomView,
+)
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -224,9 +229,19 @@ urlpatterns = [
 
     # ----------- Atoms micro-learning (v1) -----------
     path(
+        "api/v1/professions/<int:profession_id>/atoms/",
+        ProfessionAtomsListView.as_view(),
+        name="profession-atoms-list",
+    ),
+    path(
         "api/v1/professions/<int:profession_id>/next-atom/",
         ProfessionNextAtomView.as_view(),
         name="profession-next-atom",
+    ),
+    path(
+        "api/v1/atoms/<int:atom_id>/",
+        AtomDetailView.as_view(),
+        name="atom-detail",
     ),
     path(
         "api/v1/atoms/<int:atom_id>/submit/",

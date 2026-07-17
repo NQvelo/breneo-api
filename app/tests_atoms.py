@@ -87,6 +87,55 @@ class AtomAPITests(TestCase):
         self.assertEqual(body["quiz"]["options"], SAMPLE_QUIZ["options"])
         self.assertNotIn("correct_index", body["quiz"])
         self.assertNotIn("explanation", body["quiz"])
+        self.assertEqual(body["total_atoms"], 2)
+        self.assertEqual(len(body["path_atoms"]), 2)
+        self.assertEqual(body["path_atoms"][0]["id"], self.atom1.id)
+        self.assertEqual(body["path_atoms"][1]["title"], self.atom2.title)
+
+    def test_profession_atoms_list_returns_path_with_status(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            f"/api/v1/professions/{self.profession.id}/atoms/"
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["profession_id"], self.profession.id)
+        self.assertEqual(body["total_count"], 2)
+        self.assertEqual(body["completed_count"], 0)
+        self.assertEqual(body["current_atom_id"], self.atom1.id)
+        self.assertEqual(body["atoms"][0]["status"], "available")
+        self.assertEqual(body["atoms"][1]["status"], "locked")
+
+    def test_profession_atoms_list_marks_completed_and_advances(self):
+        self.client.force_authenticate(user=self.user)
+        self.client.post(
+            f"/api/v1/atoms/{self.atom1.id}/submit/",
+            {"selected_option_index": 0},
+            format="json",
+        )
+        response = self.client.get(
+            f"/api/v1/professions/{self.profession.id}/atoms/"
+        )
+        body = response.json()
+        self.assertEqual(body["atoms"][0]["status"], "completed")
+        self.assertEqual(body["atoms"][1]["status"], "available")
+        self.assertEqual(body["completed_count"], 1)
+        self.assertEqual(body["current_atom_id"], self.atom2.id)
+
+    def test_atom_detail_requires_prerequisites(self):
+        self.client.force_authenticate(user=self.user)
+        blocked = self.client.get(f"/api/v1/atoms/{self.atom2.id}/")
+        self.assertEqual(blocked.status_code, 403)
+
+        self.client.post(
+            f"/api/v1/atoms/{self.atom1.id}/submit/",
+            {"selected_option_index": 0},
+            format="json",
+        )
+        allowed = self.client.get(f"/api/v1/atoms/{self.atom2.id}/")
+        self.assertEqual(allowed.status_code, 200)
+        self.assertEqual(allowed.json()["id"], self.atom2.id)
+        self.assertIn("path_atoms", allowed.json())
 
     def test_cannot_skip_to_second_atom(self):
         self.client.force_authenticate(user=self.user)

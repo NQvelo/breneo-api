@@ -3,8 +3,46 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .atom_serializers import AtomDetailSerializer, AtomSubmitResultSerializer, AtomSubmitSerializer
-from .atom_service import get_next_atom_for_user, submit_atom_quiz
+from .atom_serializers import (
+    AtomDetailSerializer,
+    AtomSubmitResultSerializer,
+    AtomSubmitSerializer,
+    ProfessionAtomPathSerializer,
+)
+from .atom_service import (
+    get_atom_or_none,
+    get_next_atom_for_user,
+    get_profession_atom_path_for_user,
+    submit_atom_quiz,
+    user_can_access_atom,
+)
+
+
+class ProfessionAtomsListView(APIView):
+    """
+    GET /api/v1/professions/{profession_id}/atoms/
+
+    Returns the full atom path for a profession with per-user progress status.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, profession_id: int):
+        path, error_code = get_profession_atom_path_for_user(request.user, profession_id)
+
+        if error_code == "profession_not_found":
+            return Response(
+                {"detail": "Profession not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if error_code == "no_atoms":
+            return Response(
+                {"detail": "This profession has no atoms yet."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(ProfessionAtomPathSerializer(path).data)
 
 
 class ProfessionNextAtomView(APIView):
@@ -35,6 +73,33 @@ class ProfessionNextAtomView(APIView):
             return Response(
                 {"detail": "You have completed all atoms for this profession."},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(AtomDetailSerializer(atom).data)
+
+
+class AtomDetailView(APIView):
+    """
+    GET /api/v1/atoms/{atom_id}/
+
+    Returns a playable atom when the user has completed all prerequisites.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, atom_id: int):
+        atom = get_atom_or_none(atom_id)
+        if atom is None:
+            return Response(
+                {"detail": "Atom not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not user_can_access_atom(request.user, atom):
+            return Response(
+                {"detail": "Complete prerequisite atoms before opening this lesson."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         return Response(AtomDetailSerializer(atom).data)
