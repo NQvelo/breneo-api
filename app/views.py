@@ -290,6 +290,13 @@ def _course_queryset_with_relations():
     )
 
 
+def _resolve_academy(user):
+    """Return Academy linked to this auth user, or None."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return None
+    return Academy.objects.filter(user=user).first()
+
+
 # ---------------- Courses List API ----------------
 class CoursesListAPIView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -344,18 +351,14 @@ class CoursesListAPIView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        academy = Academy.objects.filter(user=request.user).first()
+        academy = _resolve_academy(request.user)
         if not academy:
             return Response(
                 {"error": "Only academy accounts can create courses."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        payload = request.data.copy()
-        if not payload.get("id"):
-            payload["id"] = str(uuid.uuid4())
-
-        serializer = CourseManageSerializer(data=payload)
+        serializer = CourseManageSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -404,7 +407,7 @@ class CourseDetailAPIView(APIView):
                 {"error": "Authentication required."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-        academy = Academy.objects.filter(user=request.user).first()
+        academy = _resolve_academy(request.user)
         if not academy:
             return None, Response(
                 {"error": "Only academy accounts can edit courses."},

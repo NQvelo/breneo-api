@@ -29,6 +29,8 @@ from .models import (
     Notification,
     JobNotification,
 )
+import uuid
+import json
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import authenticate,get_user_model
@@ -363,15 +365,72 @@ class CourseListSerializer(serializers.ModelSerializer):
         return obj.id in enrolled_course_ids
 
 
+class SkillInputField(serializers.Field):
+    """
+    Accept skills as:
+    - pk (int / numeric string)
+    - name (string)
+    - object {"id": ..., "name": ...} (same shape as course list responses)
+    """
+
+    default_error_messages = {
+        "not_found": 'Skill "{value}" was not found.',
+        "invalid": "Invalid skill value. Expected id, name, or {{id, name}}.",
+    }
+
+    def to_internal_value(self, data):
+        if isinstance(data, Skill):
+            return data
+
+        if isinstance(data, dict):
+            skill_id = data.get("id")
+            name = data.get("name")
+            if skill_id is not None and skill_id != "":
+                skill = Skill.objects.filter(pk=skill_id).first()
+                if skill:
+                    return skill
+            if name:
+                skill = Skill.objects.filter(name__iexact=str(name).strip()).first()
+                if skill:
+                    return skill
+                self.fail("not_found", value=name)
+            self.fail("invalid")
+
+        if isinstance(data, int) or (isinstance(data, str) and data.strip().isdigit()):
+            skill = Skill.objects.filter(pk=int(data)).first()
+            if skill:
+                return skill
+            self.fail("not_found", value=data)
+
+        if isinstance(data, str) and data.strip():
+            skill = Skill.objects.filter(name__iexact=data.strip()).first()
+            if skill:
+                return skill
+            self.fail("not_found", value=data)
+
+        self.fail("invalid")
+
+    def to_representation(self, value):
+        return value.pk if isinstance(value, Skill) else value
+
+
 class CourseManageSerializer(serializers.ModelSerializer):
-    required_skills = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Skill.objects.all(), required=False
+    id = serializers.CharField(required=False, allow_blank=True)
+    required_skills = serializers.ListField(
+        child=SkillInputField(), required=False, allow_empty=True
     )
-    skills_taught = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Skill.objects.all(), required=False
+    skills_taught = serializers.ListField(
+        child=SkillInputField(), required=False, allow_empty=True
     )
     enrolled_users = serializers.PrimaryKeyRelatedField(
         many=True, queryset=User.objects.all(), required=False
+    )
+    price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, allow_null=True
+    )
+    lessons_count = serializers.IntegerField(required=False, allow_null=True)
+    registration_link = serializers.URLField(
+        required=False, allow_blank=True, allow_null=True
     )
 
     class Meta:
@@ -394,6 +453,117 @@ class CourseManageSerializer(serializers.ModelSerializer):
             "lecturer_name",
             "lecturer_photo",
         ]
+        extra_kwargs = {
+            "title": {"required": False},
+            "cover_image": {"required": False, "allow_null": True},
+            "lecturer_photo": {"required": False, "allow_null": True},
+        }
+
+    @staticmethod
+    def _normalize_list(value):
+        if value is None or value == "":
+            return []
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return []
+            if text.startswith("["):
+                try:
+                    parsed = json.loads(text)
+                    return parsed if isinstance(parsed, list) else [parsed]
+                except json.JSONDecodeError:
+                    pass
+            return [part.strip() for part in text.split(",") if part.strip()]
+        if isinstance(value, (list, tuple)):
+            return list(value)
+        return [value]
+
+    def to_internal_value(self, data):
+        # QueryDict / multipart-safe mutable copy
+        if hasattr(data, "lists"):
+            mutable = {}
+            for key in data.keys():
+                values = data.getlist(key) if hasattr(data, "getlist") else [data.get(key)]
+                mutable[key] = values if len(values) > 1 else values[0]
+            data = mutable
+        else:
+            data = dict(data)
+
+        for field in ("required_skills", "skills_taught", "enrolled_users"):
+            if field in data:
+                data[field] = self._normalize_list(data.get(field))
+
+        if data.get("price") == "":
+            data["price"] = 0
+        if data.get("lessons_count") == "":
+            data["lessons_count"] = 0
+        if data.get("registration_link") == "":
+            data["registration_link"] = None
+
+        return super().to_internal_value(data)
+
+    def validate_price(self, value):
+        if value in ("", None):
+            return 0
+        return value
+
+    def validate_lessons_count(self, value):
+        if value in ("", None):
+            return 0
+        return value
+
+    def validate_registration_link(self, value):
+        if value == "":
+            return None
+        return value
+
+    def validate(self, attrs):
+        # Create requires a title; updates may omit it.
+        if not self.instance and not attrs.get("title"):
+            raise serializers.ValidationError({"title": "This field is required."})
+        return attrs
+
+    def create(self, validated_data):
+        required_skills = validated_data.pop("required_skills", None)
+        skills_taught = validated_data.pop("skills_taught", None)
+        enrolled_users = validated_data.pop("enrolled_users", None)
+
+        if not validated_data.get("id"):
+            validated_data["id"] = str(uuid.uuid4())
+
+        if validated_data.get("price") is None:
+            validated_data["price"] = 0
+        if validated_data.get("lessons_count") is None:
+            validated_data["lessons_count"] = 0
+
+        course = Course.objects.create(**validated_data)
+
+        if required_skills is not None:
+            course.required_skills.set(required_skills)
+        if skills_taught is not None:
+            course.skills_taught.set(skills_taught)
+        if enrolled_users is not None:
+            course.enrolled_users.set(enrolled_users)
+        return course
+
+    def update(self, instance, validated_data):
+        # Course id is the URL PK — never overwrite from body.
+        validated_data.pop("id", None)
+        required_skills = validated_data.pop("required_skills", None)
+        skills_taught = validated_data.pop("skills_taught", None)
+        enrolled_users = validated_data.pop("enrolled_users", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if required_skills is not None:
+            instance.required_skills.set(required_skills)
+        if skills_taught is not None:
+            instance.skills_taught.set(skills_taught)
+        if enrolled_users is not None:
+            instance.enrolled_users.set(enrolled_users)
+        return instance
 
 # ------- User Registration ---------------------
 
