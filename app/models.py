@@ -638,16 +638,32 @@ class SavedJob(models.Model):
 # Subscription Models
 
 class SubscriptionPlan(models.Model):
+    AUDIENCE_USER = "user"
+    AUDIENCE_ACADEMY = "academy"
+    AUDIENCE_COMPANY = "company"
+    AUDIENCE_CHOICES = [
+        (AUDIENCE_USER, "User"),
+        (AUDIENCE_ACADEMY, "Academy"),
+        (AUDIENCE_COMPANY, "Company"),
+    ]
+
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     duration_days = models.IntegerField(default=30)
     is_active = models.BooleanField(default=True)
+    audience = models.CharField(
+        max_length=20,
+        choices=AUDIENCE_CHOICES,
+        default=AUDIENCE_USER,
+        db_index=True,
+        help_text="Who this plan is for: User, Academy, or Company.",
+    )
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} - {self.price} GEL"
+        return f"{self.name} ({self.get_audience_display()}) - {self.price} GEL"
 
     class Meta:
         ordering = ['price']

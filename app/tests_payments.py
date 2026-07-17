@@ -25,7 +25,8 @@ class BOGPaymentTests(TestCase):
             name="Test Plan",
             price="0.10",
             duration_days=30,
-            is_active=True
+            is_active=True,
+            audience=SubscriptionPlan.AUDIENCE_USER,
         )
 
     @override_settings(BOG_CALLBACK_SECRET_PUBLIC_KEY=PUBLIC_KEY_PEM)
@@ -54,6 +55,12 @@ class BOGPaymentTests(TestCase):
         # Verify post was called with intent: RECURRING
         args, kwargs = mock_post.call_args
         self.assertEqual(kwargs['json']['intent'], 'RECURRING')
+
+        # Pending subscription created, but not activated until payment callback
+        sub = UserSubscription.objects.get(user=self.user)
+        self.assertFalse(sub.is_active)
+        self.assertEqual(sub.plan_id, self.plan.id)
+        self.assertEqual(sub.parent_order_id, 'fake-order-id')
 
     @override_settings(BOG_CALLBACK_SECRET_PUBLIC_KEY=PUBLIC_KEY_PEM)
     def test_callback_signature_verification_success(self):
@@ -121,12 +128,10 @@ class BOGPaymentTests(TestCase):
             
         self.assertEqual(response.status_code, 200)
         
-        # Verify put was called with corrected URL: orders/{order_id}/subscriptions
-        expected_url = f"{bog_order_url}/test-order-id/subscriptions"
-        mock_put.assert_called_once()
-        args, kwargs = mock_put.call_args
-        self.assertEqual(args[0], expected_url)
-        self.assertEqual(kwargs['json'], {})
+        # Card/order may be stored, but plan must NOT activate without payment
+        sub = UserSubscription.objects.get(user=self.user)
+        self.assertFalse(sub.is_active)
+        self.assertEqual(sub.parent_order_id, "test-parent-id")
 
     def test_bog_auth_placeholder(self):
         response = self.client.get('/api/payments/bog/auth/')

@@ -978,7 +978,7 @@ class SavedCourseSerializer(serializers.ModelSerializer):
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
-        fields = ["id", "name", "price", "duration_days", "description"]
+        fields = ["id", "name", "price", "duration_days", "description", "audience"]
 
 
 # ---------------- Notifications ----------------

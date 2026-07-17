@@ -129,6 +129,15 @@ def _user_is_employer(user):
     return bool(user and user.is_authenticated and Employer.objects.filter(user_id=user.pk).exists())
 
 
+def _subscription_audience_for_user(user):
+    """Map authenticated account type to SubscriptionPlan.audience."""
+    if _user_is_employer(user):
+        return SubscriptionPlan.AUDIENCE_COMPANY
+    if _user_is_academy(user):
+        return SubscriptionPlan.AUDIENCE_ACADEMY
+    return SubscriptionPlan.AUDIENCE_USER
+
+
 def _reject_non_regular_user_profile(request):
     """User/UserProfile social APIs are for default users only."""
     if _user_is_academy(request.user):
@@ -3416,11 +3425,19 @@ class CreateOrderView(APIView):
         if not plan_id:
             return Response({"error": "plan_id is required"}, status=400)
         
-        # Fetch the subscription plan
+        # Fetch the subscription plan for this account type only
+        audience = _subscription_audience_for_user(request.user)
         try:
-            plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+            plan = SubscriptionPlan.objects.get(
+                id=plan_id,
+                is_active=True,
+                audience=audience,
+            )
         except SubscriptionPlan.DoesNotExist:
-            return Response({"error": "Invalid or inactive subscription plan"}, status=404)
+            return Response(
+                {"error": "Invalid or inactive subscription plan for your account type"},
+                status=404,
+            )
         
         amount = float(plan.price)
 
@@ -3450,7 +3467,7 @@ class CreateOrderView(APIView):
             "intent": "RECURRING",
             "redirect_urls": {
                 "success": f"https://dashboard.breneo.app/success?plan_id={plan.id}",
-                "fail": "https://dashboard.breneo.app/fail",
+                "fail": "https://dashboard.breneo.app/failure",
             }
         }
 
@@ -3458,9 +3475,29 @@ class CreateOrderView(APIView):
             res = requests.post(settings.BOG_ORDER_URL, headers=headers, json=payload)
             res.raise_for_status()
             data = res.json()
+            order_id = data["id"]
+
+            # Create/update a pending subscription only. Paid access must wait for
+            # BOG callback with order_status=completed — never activate here.
+            existing = UserSubscription.objects.filter(user=request.user).first()
+            if existing:
+                if not existing.is_active:
+                    existing.plan = plan
+                    existing.parent_order_id = order_id
+                    existing.next_payment_date = None
+                    existing.save(update_fields=["plan", "parent_order_id", "next_payment_date"])
+            else:
+                UserSubscription.objects.create(
+                    user=request.user,
+                    plan=plan,
+                    parent_order_id=order_id,
+                    is_active=False,
+                    next_payment_date=None,
+                )
+
             return Response({
                 "redirect_url": data["_links"]["redirect"]["href"],
-                "order_id": data["id"]
+                "order_id": order_id
             })
         except requests.exceptions.HTTPError as e:
             # Log the full response for debugging
@@ -3497,9 +3534,14 @@ class SaveCardView(APIView):
         
         if plan_id:
             try:
-                plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+                audience = _subscription_audience_for_user(request.user)
+                plan = SubscriptionPlan.objects.get(
+                    id=plan_id,
+                    is_active=True,
+                    audience=audience,
+                )
             except SubscriptionPlan.DoesNotExist:
-                return Response({"error": "Invalid subscription plan"}, status=404)
+                return Response({"error": "Invalid subscription plan for your account type"}, status=404)
 
         # Clean string ID (remove quotes/spaces)
         order_id = str(order_id).strip().replace('"', '').replace("'", "")
@@ -3566,16 +3608,27 @@ class SaveCardView(APIView):
         if not parent_order_id:
             return Response({"error": "No parent_order_id returned"}, status=400)
 
-        # Save subscription info with plan (no local card data storage)
-        UserSubscription.objects.update_or_create(
-            user=request.user,
-            defaults={
-                "parent_order_id": parent_order_id,
-                "plan": plan,
-                "is_active": True,
-                "next_payment_date": timezone.now().date() + timedelta(days=30)
-            }
-        )
+        # Store card/order linkage only. Never activate — payment confirmation
+        # happens exclusively in BOGCallbackView when order_status is completed.
+        existing = UserSubscription.objects.filter(user=request.user).first()
+        if existing and existing.is_active:
+            # Keep current paid access; only refresh recurring identifiers.
+            update_fields = {"parent_order_id": parent_order_id}
+            if plan:
+                update_fields["plan"] = plan
+            for field, value in update_fields.items():
+                setattr(existing, field, value)
+            existing.save(update_fields=list(update_fields.keys()))
+        else:
+            UserSubscription.objects.update_or_create(
+                user=request.user,
+                defaults={
+                    "parent_order_id": parent_order_id,
+                    "plan": plan or (existing.plan if existing else None),
+                    "is_active": False,
+                    "next_payment_date": None,
+                }
+            )
 
         return Response({
             "message": "Card saved for automatic payments", 
@@ -3779,68 +3832,93 @@ class BOGCallbackView(APIView):
         order_status = body.get("order_status", {}).get("key")
         payment_detail = body.get("payment_detail", {})
         parent_order_id = payment_detail.get("parent_order_id")
+        actual_order_id = body.get("id")
+        external_order_id = body.get("external_order_id")
 
-        # Try to find subscription by parent_order_id (Recurring)
+        def resolve_plan_from_body():
+            """Parse plan id from basket product_id like subscription_plan_{id}."""
+            try:
+                basket = (
+                    body.get("purchase_units", {}).get("basket")
+                    or body.get("basket")
+                    or []
+                )
+                for item in basket:
+                    product_id = str(item.get("product_id", ""))
+                    if product_id.startswith("subscription_plan_"):
+                        plan_id = int(product_id.replace("subscription_plan_", "", 1))
+                        return SubscriptionPlan.objects.filter(id=plan_id).first()
+            except Exception as e:
+                logger.error(f"Failed to resolve plan from callback body: {str(e)}")
+            return None
+
+        def resolve_user_from_external_order():
+            if not external_order_id or "user-" not in str(external_order_id):
+                return None
+            try:
+                parts = str(external_order_id).split("-")
+                if len(parts) >= 2:
+                    return User.objects.get(id=parts[1])
+            except Exception as e:
+                logger.error(f"Failed to resolve user from external_order_id: {str(e)}")
+            return None
+
+        # Try to find subscription by parent_order_id (Recurring) or current order id
         sub = None
         if parent_order_id:
             sub = UserSubscription.objects.filter(parent_order_id=parent_order_id).first()
+        if not sub and actual_order_id:
+            sub = UserSubscription.objects.filter(parent_order_id=actual_order_id).first()
 
-        # If not found by parent_order_id, it might be the INITIAL payment
-        # In this case, we need to find the user via external_order_id and CREATE/LINK the subscription
+        # Initial payment: find (or create) via external_order_id
         if not sub:
-             external_order_id = body.get("external_order_id")
-             # external_order_id format: user-{user_id}-{timestamp}
-             if external_order_id and "user-" in external_order_id:
-                try:
-                    parts = external_order_id.split("-")
-                    if len(parts) >= 2:
-                        user_id = parts[1]
-                        user = User.objects.get(id=user_id)
-                        
-                        # Find the user's subscription (it should exist from SaveCardView/CreateOrder, 
-                        # but might not have the parent_order_id set yet if this is the very first callback)
-                        sub = UserSubscription.objects.filter(user=user).first()
-                        
-                        if sub:
-                            # LINK the subscription to this payment's parent_order_id
-                            # This is critical for future recurring payments
-                            # The 'order_id' of this first successful payment BECOMES the 'parent_order_id' for future
-                            actual_order_id = body.get("id")
-                            if actual_order_id:
-                                sub.parent_order_id = actual_order_id
-                                sub.save()
-                                logger.info(f"Linked initial subscription parent_order_id: {sub.parent_order_id}")
-                except Exception as e:
-                    logger.error(f"Failed to link initial subscription: {str(e)}")
+            user = resolve_user_from_external_order()
+            if user:
+                sub = UserSubscription.objects.filter(user=user).first()
+                if not sub and order_status == "completed":
+                    plan = resolve_plan_from_body()
+                    sub = UserSubscription.objects.create(
+                        user=user,
+                        plan=plan,
+                        parent_order_id=actual_order_id or parent_order_id,
+                        is_active=False,
+                    )
+                    logger.info(f"Created subscription from callback for user {user.id}")
+                elif sub and actual_order_id:
+                    # LINK for future recurring charges
+                    sub.parent_order_id = actual_order_id
+                    sub.save(update_fields=["parent_order_id"])
+                    logger.info(f"Linked initial subscription parent_order_id: {sub.parent_order_id}")
 
         if order_status == "completed" and sub:
-            sub.next_payment_date = timezone.now().date() + timedelta(days=30)
+            # Activate ONLY after confirmed payment
+            if not sub.plan:
+                resolved_plan = resolve_plan_from_body()
+                if resolved_plan:
+                    sub.plan = resolved_plan
+
+            duration_days = sub.plan.duration_days if sub.plan and sub.plan.duration_days else 30
+            if actual_order_id:
+                sub.parent_order_id = actual_order_id
+            sub.next_payment_date = timezone.now().date() + timedelta(days=duration_days)
             sub.is_active = True
-            sub.save()
-            logger.info(f"Subscription activated for order_id: {body.get('id')}")
-                
-            # Use the already extracted payment_detail
-            card_mask = payment_detail.get("payer_identifier") # e.g. 1234****5678
+
+            card_mask = payment_detail.get("payer_identifier")  # e.g. 1234****5678
             card_type = payment_detail.get("card_type")
 
-            # Update subscription with card details if available
-            if sub and (card_mask or card_type):
-                if card_mask:
-                        # Extract last 4 digits if it's a full mask
-                        if "***" in card_mask:
-                            sub.card_mask = card_mask[-4:]
-                        else:
-                            sub.card_mask = card_mask
-                
-                if card_type:
-                    sub.card_type = card_type
-                
-                sub.save()
-                logger.info(f"Updated subscription card details: {sub.card_type} {sub.card_mask}")
+            if card_mask:
+                if "***" in card_mask:
+                    sub.card_mask = card_mask[-4:]
+                else:
+                    sub.card_mask = card_mask
+            if card_type:
+                sub.card_type = card_type
 
-            # Record in Payment History
+            sub.save()
+            logger.info(f"Subscription activated for order_id: {actual_order_id}")
+
             PaymentHistory.objects.update_or_create(
-                order_id=body.get("id"),
+                order_id=actual_order_id,
                 defaults={
                     "user": sub.user,
                     "subscription": sub,
@@ -3853,15 +3931,29 @@ class BOGCallbackView(APIView):
             )
 
         elif order_status in ["failed", "rejected"]:
-            sub = UserSubscription.objects.filter(parent_order_id=parent_order_id).first()
+            if not sub:
+                if parent_order_id:
+                    sub = UserSubscription.objects.filter(parent_order_id=parent_order_id).first()
+                if not sub and actual_order_id:
+                    sub = UserSubscription.objects.filter(parent_order_id=actual_order_id).first()
+                if not sub:
+                    user = resolve_user_from_external_order()
+                    if user:
+                        sub = UserSubscription.objects.filter(user=user).first()
+
             if sub:
-                sub.is_active = False
-                sub.save()
-            
-            # Record failed payment
-            if sub:
+                # Only deactivate if this failed payment matches the pending/current order
+                matching_order = (
+                    (parent_order_id and sub.parent_order_id == parent_order_id)
+                    or (actual_order_id and sub.parent_order_id == actual_order_id)
+                )
+                if matching_order or not sub.is_active:
+                    sub.is_active = False
+                    sub.save(update_fields=["is_active"])
+                    logger.warning(f"Subscription deactivated due to failed payment: {order_status}")
+
                 PaymentHistory.objects.update_or_create(
-                    order_id=body.get("id"),
+                    order_id=actual_order_id or f"fail-{timezone.now().timestamp()}",
                     defaults={
                         "user": sub.user,
                         "subscription": sub,
@@ -3870,8 +3962,6 @@ class BOGCallbackView(APIView):
                         "description": f"Payment {order_status}"
                     }
                 )
-                sub.save()
-                logger.warning(f"Subscription deactivated due to failed payment: {order_status}")
 
         return Response({"status": "ok"})
 
@@ -3879,10 +3969,11 @@ class BOGCallbackView(APIView):
 # ==================== Subscription Plans ====================
 
 class SubscriptionPlanListView(APIView):
-    """List all active subscription plans"""
-    
+    """List active subscription plans for the current account type."""
+
     def get(self, request):
-        plans = SubscriptionPlan.objects.filter(is_active=True)
+        audience = _subscription_audience_for_user(request.user)
+        plans = SubscriptionPlan.objects.filter(is_active=True, audience=audience)
         serializer = SubscriptionPlanSerializer(plans, many=True)
         return Response(serializer.data)
 
