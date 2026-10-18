@@ -1,6 +1,6 @@
 Academy Verification
 
-Hello,
+Dear {{ first_name|default:"User" }},
 
 Thank you for registering your academy with Breneo! Please use the verification code below to complete your academy registration:
 

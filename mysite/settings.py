@@ -222,7 +222,9 @@ else:
     DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@breneo.ge")
 
 # Email logo URL (set BRENEO_LOGO_URL in .env or use default)
-BRENEO_LOGO_URL = os.getenv("BRENEO_LOGO_URL", "")
+BRENEO_LOGO_URL = (
+    os.getenv("BRENEO_LOGO_URL") or "https://app.breneo.ge/lovable-uploads/Breneo-logo.png"
+).strip()
 
 # Show which email method is active (app/views.py uses Resend HTTP API when key is set)
 if RESEND_API_KEY:

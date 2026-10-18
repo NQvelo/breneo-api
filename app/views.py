@@ -2541,6 +2541,7 @@ class TemporaryEmployerRegisterView(generics.CreateAPIView):
             "emails/academy_verification_code.html",
             {
                 "verification_code": temp.verification_code,
+                "first_name": temp.first_name,
                 "logo_url": getattr(settings, "BRENEO_LOGO_URL", ""),
             },
         )
@@ -2548,6 +2549,7 @@ class TemporaryEmployerRegisterView(generics.CreateAPIView):
             "emails/academy_verification_code.txt",
             {
                 "verification_code": temp.verification_code,
+                "first_name": temp.first_name,
             },
         )
 
@@ -2765,10 +2767,12 @@ class TemporaryAcademyRegisterView(generics.CreateAPIView):
         # Render email templates
         html_message = render_to_string('emails/academy_verification_code.html', {
             'verification_code': temp_academy.verification_code,
+            'first_name': temp_academy.name,
             'logo_url': getattr(settings, 'BRENEO_LOGO_URL', ''),
         })
         text_message = render_to_string('emails/academy_verification_code.txt', {
             'verification_code': temp_academy.verification_code,
+            'first_name': temp_academy.name,
         })
 
         # Send email with HTML template
@@ -2861,10 +2865,12 @@ class PasswordResetRequestView(APIView):
         # Render email templates
         html_message = render_to_string('emails/password_reset.html', {
             'reset_code': code,
+            'first_name': user.first_name,
             'logo_url': getattr(settings, 'BRENEO_LOGO_URL', ''),
         })
         text_message = render_to_string('emails/password_reset.txt', {
             'reset_code': code,
+            'first_name': user.first_name,
         })
 
         # Send email with HTML template

@@ -20,7 +20,7 @@ Based on your `.env` file, add these variables to Railway:
 ```
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
 DEFAULT_FROM_EMAIL=noreply@breneo.ge
-BRENEO_LOGO_URL=https://dashboard.breneo.app/lovable-uploads/Breneo-logo.png
+BRENEO_LOGO_URL=https://app.breneo.ge/lovable-uploads/Breneo-logo.png
 ```
 
 **Important Notes:**
