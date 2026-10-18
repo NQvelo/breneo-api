@@ -208,7 +208,7 @@ if RESEND_API_KEY:
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = "resend"
     EMAIL_HOST_PASSWORD = RESEND_API_KEY
-    DEFAULT_FROM_EMAIL = (os.getenv("DEFAULT_FROM_EMAIL") or "noreply@breneo.app").strip()
+    DEFAULT_FROM_EMAIL = (os.getenv("DEFAULT_FROM_EMAIL") or "noreply@breneo.ge").strip()
     # SMTP timeout settings to prevent worker timeouts
     EMAIL_TIMEOUT = 10  # seconds - prevents hanging connections
     EMAIL_USE_SSL = False  # Use TLS, not SSL
@@ -219,7 +219,7 @@ else:
     EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
     EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
     EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-    DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@breneo.app")
+    DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@breneo.ge")
 
 # Email logo URL (set BRENEO_LOGO_URL in .env or use default)
 BRENEO_LOGO_URL = os.getenv("BRENEO_LOGO_URL", "")

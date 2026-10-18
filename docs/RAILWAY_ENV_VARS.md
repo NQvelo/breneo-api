@@ -18,8 +18,8 @@ Based on your `.env` file, add these variables to Railway:
 
 ### 1. Email Configuration (NEW - Required for emails to work)
 ```
-RESEND_API_KEY=re_CnSUFLGi_JyVuDABmuaT8gYnRaqXySTR5
-DEFAULT_FROM_EMAIL=noreply@breneo.app
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
+DEFAULT_FROM_EMAIL=noreply@breneo.ge
 BRENEO_LOGO_URL=https://dashboard.breneo.app/lovable-uploads/Breneo-logo.png
 ```
 
@@ -97,9 +97,9 @@ After deploying with the email variables:
 
 ## Domain Verification in Resend
 
-For `DEFAULT_FROM_EMAIL=noreply@breneo.app` to work:
+For `DEFAULT_FROM_EMAIL=noreply@breneo.ge` to work:
 1. Go to [Resend Dashboard](https://resend.com/domains)
-2. Add and verify your domain `breneo.app`
+2. Add and verify your domain `breneo.ge`
 3. Add DNS records as instructed by Resend
 4. Wait for verification (usually a few minutes)
 
