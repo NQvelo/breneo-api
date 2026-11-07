@@ -169,6 +169,26 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 GSK_API_KEY = os.getenv("GSK_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Bilingual ATS resume reader. Groq is the default client (same key as the rest of the app).
+# Set ATS_LLM_PROVIDER=openai to use OPENAI_API_KEY instead.
+# Scanned PDFs also need the tesseract (eng+kat) and poppler binaries on the host.
+ATS_LLM_PROVIDER = os.getenv("ATS_LLM_PROVIDER", "groq")
+ATS_LLM_MODEL = os.getenv("ATS_LLM_MODEL", "llama-3.3-70b-versatile")
+ATS_OCR_LANGS = os.getenv("ATS_OCR_LANGS", "eng+kat")
+
+
+def _env_int(name, default):
+    try:
+        return int(os.getenv(name, default))
+    except (TypeError, ValueError):
+        return int(default)
+
+
+ATS_OCR_DPI = _env_int("ATS_OCR_DPI", 200)
+ATS_MAX_PAGES = _env_int("ATS_MAX_PAGES", 8)
+ATS_MAX_UPLOAD_BYTES = _env_int("ATS_MAX_UPLOAD_BYTES", 10 * 1024 * 1024)
 
 
 REST_FRAMEWORK = {
@@ -224,6 +244,10 @@ else:
 # Email logo URL (set BRENEO_LOGO_URL in .env or use default)
 BRENEO_LOGO_URL = (
     os.getenv("BRENEO_LOGO_URL") or "https://app.breneo.ge/lovable-uploads/Breneo-logo.png"
+).strip()
+# White-text logo shown by email clients in dark mode
+BRENEO_LOGO_DARK_URL = (
+    os.getenv("BRENEO_LOGO_DARK_URL") or "https://app.breneo.ge/lovable-uploads/Breneo-logo-dark.png"
 ).strip()
 
 # Show which email method is active (app/views.py uses Resend HTTP API when key is set)

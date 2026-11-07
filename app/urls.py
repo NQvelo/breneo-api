@@ -83,6 +83,7 @@ from .atom_views import (
     ProfessionAtomsListView,
     ProfessionNextAtomView,
 )
+from .ats.views import MyResumeView, ResumeMatchView, ResumeParseView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -149,6 +150,7 @@ urlpatterns = [
      #-------------- Profile ----------------
     path("api/profile/", UserProfileView.as_view(), name="user-profile"),
     path("api/me/profile/", PersonalProfileView.as_view(), name="personal-profile"),
+    path("api/me/resume/", MyResumeView.as_view(), name="me-resume"),
     path("api/me/social-links/", SocialLinksMeView.as_view(), name="me-social-links"),
     path("api/me/industry-profile/", IndustryProfileView.as_view(), name="industry-profile"),
     path("api/academy/profile/", AcademyProfileUpdateView.as_view(), name="academy-profile"),
@@ -226,6 +228,10 @@ urlpatterns = [
         InternalNotificationCreateView.as_view(),
         name="internal-notifications",
     ),
+
+    # ----------- Bilingual ATS resume reader -----------
+    path("api/ats/parse/", ResumeParseView.as_view(), name="ats-parse"),
+    path("api/ats/match/", ResumeMatchView.as_view(), name="ats-match"),
 
     # ----------- Atoms micro-learning (v1) -----------
     path(

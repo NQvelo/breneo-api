@@ -603,6 +603,26 @@ class WorkExperience(models.Model):
         return f"{self.user_id} - {self.job_title} at {self.company}"
 
 
+class UserResume(models.Model):
+    """Latest parsed CV for a user. The profile page reads this, and a copy is written onto profile fields."""
+
+    class Meta:
+        verbose_name = "Parsed CV"
+        verbose_name_plural = "Parsed CVs"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="resume",
+    )
+    data = models.JSONField(default=dict)
+    source_filename = models.CharField(max_length=255, blank=True, default="")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user_id} resume"
+
+
 class SavedCourse(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="saved_courses")
     academy = models.ForeignKey('Academy', on_delete=models.CASCADE, null=True, blank=True, related_name="saved_courses")

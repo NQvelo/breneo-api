@@ -1,5 +1,5 @@
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:28px auto;">
     <tr>
-        {% for digit in code %}{% if not forloop.first %}<td width="6" style="width:6px; font-size:0; line-height:0;">&nbsp;</td>{% endif %}<td align="center" valign="middle" width="44" height="52" style="width:44px; height:52px; background-color:#e9ecef; border-radius:8px; font-family:'Courier New', Courier, monospace; font-size:28px; line-height:52px; font-weight:bold; color:#19ACE6; text-align:center;">{{ digit }}</td>{% endfor %}
+        {% for digit in code %}{% if not forloop.first %}<td width="6" style="width:6px; font-size:0; line-height:0;">&nbsp;</td>{% endif %}<td class="em-digit" align="center" valign="middle" width="44" height="52" style="width:44px; height:52px; background-color:#e9ecef; border-radius:8px; font-family:'Courier New', Courier, monospace; font-size:28px; line-height:52px; font-weight:bold; color:#19ACE6; text-align:center;">{{ digit }}</td>{% endfor %}
     </tr>
 </table>

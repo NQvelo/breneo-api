@@ -40,6 +40,7 @@ from .models import (
     SocialLinks,
     Education,
     WorkExperience,
+    UserResume,
     UserIndustryProfile,
     UserSubscription,
     SubscriptionPlan,
@@ -504,6 +505,13 @@ class EducationAdmin(admin.ModelAdmin):
     list_display = ('user', 'school_name', 'major', 'degree_type', 'start_date', 'end_date', 'is_current')
     list_filter = ('is_current',)
     search_fields = ('user__email', 'school_name', 'major')
+
+
+@admin.register(UserResume)
+class UserResumeAdmin(admin.ModelAdmin):
+    list_display = ("user", "source_filename", "updated_at")
+    search_fields = ("user__email", "user__username", "source_filename")
+    readonly_fields = ("updated_at",)
 
 
 @admin.register(WorkExperience)

@@ -55,6 +55,9 @@ CLOUDINARY_API_SECRET=M65OgIqJ7fFSU6rfXGlAEnyR02U
 ```
 GSK_API_KEY=your-key-here
 GROQ_API_KEY=your-key-here
+ATS_LLM_PROVIDER=groq
+ATS_LLM_MODEL=llama-3.3-70b-versatile
+ATS_OCR_LANGS=eng+kat
 ```
 
 ### BOG Payment (if used)
