@@ -1,41 +1,47 @@
-"""Choose the LLM extractor, and fall back to the section parser."""
+"""AI resume extraction. Incomplete model output is rejected."""
 
 from __future__ import annotations
 
 import logging
 
-from app.ats.exceptions import LlmExtractionFailed, LlmNotConfigured
-from app.ats.extractor.heuristic import extract_with_heuristics
+from app.ats.exceptions import (
+    AiUnavailable,
+    IncompleteResumeError,
+    LlmExtractionFailed,
+    LlmNotConfigured,
+)
 from app.ats.extractor.llm import extract_with_llm
-from app.ats.schemas.resume import ResumeData
+from app.ats.schemas.resume import ResumeData, missing_fields
 from app.ats.textutil import detect_language
 
 logger = logging.getLogger(__name__)
 
 
 def extract_resume(text: str, filename: str = "") -> ResumeData:
-    """Turn cleaned resume text into ``ResumeData``.
-
-    A missing API key or a bad model response does not fail the request.
-    The heuristic parser still returns skills, dates, and contact fields.
-    """
-    warnings: list[str] = []
+    """Parse resume text with Groq (or OpenAI) and require every CV field."""
     try:
         resume = extract_with_llm(text)
-    except LlmNotConfigured:
-        warnings.append("llm_not_configured")
-        resume = extract_with_heuristics(text, filename=filename)
-    except LlmExtractionFailed as exc:
-        logger.warning("LLM resume extraction failed (%s); using the section parser", exc)
-        warnings.append("llm_failed")
-        resume = extract_with_heuristics(text, filename=filename)
-    except Exception:
-        logger.exception("LLM resume extraction failed; using the section parser")
-        warnings.append("llm_failed")
-        resume = extract_with_heuristics(text, filename=filename)
+    except LlmNotConfigured as exc:
+        raise AiUnavailable(
+            "Resume parsing needs GROQ_API_KEY. Add a free Groq key and upload the CV again."
+        ) from exc
+    except (LlmExtractionFailed, Exception) as exc:
+        logger.exception("AI resume extraction failed")
+        raise AiUnavailable("The AI could not parse this resume. Try the upload again.") from exc
+
+    missing = missing_fields(resume)
+    if missing:
+        try:
+            resume = extract_with_llm(text, missing=missing)
+        except (LlmNotConfigured, LlmExtractionFailed, Exception) as exc:
+            logger.exception("AI resume repair failed")
+            raise AiUnavailable("The AI could not fill every resume field. Try the upload again.") from exc
+        missing = missing_fields(resume)
+    if missing:
+        raise IncompleteResumeError(missing)
 
     if resume.language == "unknown":
         resume.language = detect_language(text)
+    resume.extraction_method = "llm"
     resume.source_filename = filename or resume.source_filename
-    resume.warnings = list(dict.fromkeys([*resume.warnings, *warnings]))
     return resume

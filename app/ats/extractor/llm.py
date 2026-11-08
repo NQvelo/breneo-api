@@ -18,14 +18,15 @@ _SYSTEM_PROMPT = """You extract structured resume data for an applicant tracking
 The resume may be English, Georgian (Mkhedruli), or a mix of both.
 Return one JSON object and nothing else.
 Rules:
-- Copy facts only from the resume. Do not invent employers, dates, degrees, or skills.
-- Fill both "en" and "ka" on names, titles, companies, schools, locations, summaries, and skills.
-- Keep the original wording in the matching language and put a faithful translation or standard Latin transliteration in the other one.
+- Copy facts only from the resume. Do not invent an email, phone, employer, school, date, or skill that the resume does not contain.
+- Every bilingual field must have both "en" and "ka". Put the original wording in its language and a faithful translation or standard Latin transliteration in the other one.
 - Tool names such as Python, Django, and SQL stay the same in both languages.
 - Georgian text in "ka" fields must be Mkhedruli Unicode, never Latin transliteration.
-- Dates are "YYYY" or "YYYY-MM". Use null when the resume does not state a date.
-- Set is_current to true only when the resume says the role or study is still ongoing.
-- language is one of "en", "ka", "mixed", "unknown".
+- Include at least one skill, one language, one job, one education entry, and one certification when the resume contains them.
+- Fill title, company, location, and description in both languages for every job.
+- Fill school, degree, and field_of_study in both languages for every education entry.
+- Dates are "YYYY" or "YYYY-MM". Set is_current to true only when the resume says the role or study is still ongoing, and then set end_date to null.
+- language is "en", "ka", or "mixed".
 - extraction_method must be "llm".
 """
 
@@ -67,11 +68,11 @@ _SKELETON = {
 _CHUNK_LIMIT = 12000
 
 
-def extract_with_llm(text: str) -> ResumeData:
+def extract_with_llm(text: str, *, missing: list[str] | None = None) -> ResumeData:
     client, models = _create_client()
     chunks = _chunks(text)
     parsed = [
-        _extract_chunk(client, models, chunk, index, len(chunks))
+        _extract_chunk(client, models, chunk, index, len(chunks), missing=missing)
         for index, chunk in enumerate(chunks)
     ]
     merged = parsed[0] if len(parsed) == 1 else _merge(parsed)
@@ -131,11 +132,27 @@ def _chunks(text: str) -> list[str]:
     return [head, tail]
 
 
-def _extract_chunk(client, models: list[str], text: str, index: int, total: int) -> ResumeData:
+def _extract_chunk(
+    client,
+    models: list[str],
+    text: str,
+    index: int,
+    total: int,
+    *,
+    missing: list[str] | None = None,
+) -> ResumeData:
     part = f"This is part {index + 1} of {total} of one resume.\n" if total > 1 else ""
+    repair = ""
+    if missing:
+        repair = (
+            "A previous parse left these fields empty. Fill each one in both languages "
+            "when the fact exists anywhere in the resume. Do not invent contact details, "
+            "employers, schools, or dates.\n"
+            f"Empty fields: {', '.join(missing)}\n"
+        )
     user_prompt = (
-        f"{part}"
-        "Fill this JSON shape from the resume. Leave unknown strings empty and unknown dates null.\n"
+        f"{part}{repair}"
+        "Fill this JSON shape from the resume. Both en and ka are required whenever the fact exists.\n"
         f"{json.dumps(_SKELETON, ensure_ascii=False)}\n\n"
         f"RESUME:\n{text}"
     )

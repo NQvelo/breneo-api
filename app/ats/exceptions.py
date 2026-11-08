@@ -52,8 +52,27 @@ class JobDescriptionMissing(ResumeReaderError):
     status_code = 400
 
 
+class AiUnavailable(ResumeReaderError):
+    code = "ai_unavailable"
+    status_code = 503
+
+
+class IncompleteResumeError(ResumeReaderError):
+    """The model response is missing one or more required CV fields."""
+
+    code = "incomplete_resume"
+    status_code = 422
+
+    def __init__(self, missing: list[str]):
+        self.missing = missing
+        shown = ", ".join(missing[:12])
+        if len(missing) > 12:
+            shown = f"{shown} (+{len(missing) - 12} more)"
+        super().__init__(f"The AI left required fields empty: {shown}")
+
+
 class LlmNotConfigured(Exception):
-    """No Groq or OpenAI key is available. Callers fall back to the heuristic parser."""
+    """No Groq or OpenAI key is available."""
 
 
 class LlmExtractionFailed(Exception):

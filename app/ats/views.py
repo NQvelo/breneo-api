@@ -25,9 +25,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from app.ats.exceptions import ResumeReaderError
+from app.ats.exceptions import IncompleteResumeError, ResumeReaderError
 from app.ats.persist import save_parsed_resume
-from app.ats.schemas.resume import ResumeData, format_validation_error
+from app.ats.schemas.resume import ResumeData, format_validation_error, missing_fields
 from app.ats.service import match_resume, parse_uploaded_resume
 from app.models import UserResume
 
@@ -42,7 +42,11 @@ class _AtsView(APIView):
     def _failure(self, exc: Exception):
         if isinstance(exc, ResumeReaderError):
             logger.warning("ATS request failed: %s", exc.code)
-            return Response({"detail": exc.message, "code": exc.code}, status=exc.status_code)
+            body = {"detail": exc.message, "code": exc.code}
+            missing = getattr(exc, "missing", None)
+            if missing:
+                body["missing"] = missing
+            return Response(body, status=exc.status_code)
         if isinstance(exc, ValidationError):
             return Response(
                 {"detail": format_validation_error(exc), "code": "invalid_resume"},
@@ -86,6 +90,9 @@ class ResumeMatchView(_AtsView):
                 resume, source_text = parse_uploaded_resume(upload)
             elif request.data.get("resume"):
                 resume = ResumeData.model_validate(request.data.get("resume"))
+                gaps = missing_fields(resume)
+                if gaps:
+                    raise IncompleteResumeError(gaps)
                 source_text = ""
             else:
                 return Response(

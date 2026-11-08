@@ -279,6 +279,76 @@ def _skill_dict_from_string(text: str) -> dict:
     return {"name_en": cleaned, "name_ka": ""}
 
 
+def missing_fields(resume: ResumeData) -> list[str]:
+    """Paths that a complete bilingual CV must contain."""
+    missing: list[str] = []
+
+    def require_text(path: str, value: BilingualText) -> None:
+        if not (value.en or "").strip():
+            missing.append(f"{path}.en")
+        if not (value.ka or "").strip():
+            missing.append(f"{path}.ka")
+
+    def require_dates(path: str, start: str | None, end: str | None, is_current: bool) -> None:
+        if not (start or "").strip():
+            missing.append(f"{path}.start_date")
+        if not is_current and not (end or "").strip():
+            missing.append(f"{path}.end_date")
+
+    require_text("full_name", resume.full_name)
+    require_text("headline", resume.headline)
+    if not (resume.email or "").strip():
+        missing.append("email")
+    if not (resume.phone or "").strip():
+        missing.append("phone")
+    require_text("location", resume.location)
+    require_text("summary", resume.summary)
+
+    if not resume.skills:
+        missing.append("skills")
+    for index, skill in enumerate(resume.skills):
+        if not skill.name_en.strip():
+            missing.append(f"skills[{index}].name_en")
+        if not skill.name_ka.strip():
+            missing.append(f"skills[{index}].name_ka")
+
+    if not resume.languages:
+        missing.append("languages")
+    for index, language in enumerate(resume.languages):
+        if not language.name_en.strip():
+            missing.append(f"languages[{index}].name_en")
+        if not language.name_ka.strip():
+            missing.append(f"languages[{index}].name_ka")
+
+    if not resume.work_experience:
+        missing.append("work_experience")
+    for index, role in enumerate(resume.work_experience):
+        prefix = f"work_experience[{index}]"
+        require_text(f"{prefix}.title", role.title)
+        require_text(f"{prefix}.company", role.company)
+        require_text(f"{prefix}.location", role.location)
+        require_text(f"{prefix}.description", role.description)
+        require_dates(prefix, role.start_date, role.end_date, role.is_current)
+
+    if not resume.education:
+        missing.append("education")
+    for index, school in enumerate(resume.education):
+        prefix = f"education[{index}]"
+        require_text(f"{prefix}.school", school.school)
+        require_text(f"{prefix}.degree", school.degree)
+        require_text(f"{prefix}.field_of_study", school.field_of_study)
+        require_dates(prefix, school.start_date, school.end_date, school.is_current)
+
+    if not resume.certifications:
+        missing.append("certifications")
+    for index, item in enumerate(resume.certifications):
+        require_text(f"certifications[{index}]", item)
+
+    if resume.language not in {"en", "ka", "mixed"}:
+        missing.append("language")
+    return missing
+
+
 def format_validation_error(exc) -> str:
     """Short, client-safe summary of a Pydantic validation error."""
     parts = []

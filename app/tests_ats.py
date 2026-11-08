@@ -7,6 +7,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from rest_framework.test import APIClient
 
 from app.ats.exceptions import (
+    AiUnavailable,
     CorruptResumeFile,
     EmptyResumeError,
     LlmNotConfigured,
@@ -20,9 +21,62 @@ from app.ats.matcher.engine import score_resume
 from app.ats.parsers import read_resume
 from app.ats.parsers.georgian import clean_georgian_text
 from app.ats.parsers.layout import words_to_text
-from app.ats.schemas.resume import ResumeData, SkillItem, WorkExperienceItem, BilingualText
+from app.ats.schemas.resume import (
+    BilingualText,
+    ResumeData,
+    SkillItem,
+    WorkExperienceItem,
+    missing_fields,
+)
 from app.ats.service import read_upload
 from app.models import Job, Skill
+
+
+def _both(en: str, ka: str) -> dict:
+    return {"en": en, "ka": ka}
+
+
+COMPLETE_RESUME = {
+    "full_name": _both("Nino Beridze", "ნინო ბერიძე"),
+    "headline": _both("Python Developer", "პითონ დეველოპერი"),
+    "email": "nino@example.com",
+    "phone": "+995555123456",
+    "location": _both("Tbilisi", "თბილისი"),
+    "summary": _both("Python Django developer", "პითონ და ჯანგოს დეველოპერი"),
+    "skills": [
+        {"name_en": "Python", "name_ka": "პითონ"},
+        {"name_en": "Django", "name_ka": "ჯანგო"},
+        {"name_en": "PostgreSQL", "name_ka": "პოსტგრესქლ"},
+    ],
+    "languages": [
+        {"name_en": "Georgian", "name_ka": "ქართული"},
+        {"name_en": "English", "name_ka": "ინგლისური"},
+    ],
+    "work_experience": [
+        {
+            "title": _both("Python Developer", "პითონ დეველოპერი"),
+            "company": _both("Acme", "აკმე"),
+            "location": _both("Tbilisi", "თბილისი"),
+            "start_date": "2019",
+            "end_date": "2024",
+            "is_current": False,
+            "description": _both("Built Django services on PostgreSQL.", "აშენებდა ჯანგოს სერვისებს."),
+        }
+    ],
+    "education": [
+        {
+            "school": _both("Tbilisi State University", "თბილისის სახელმწიფო უნივერსიტეტი"),
+            "degree": _both("Bachelor", "ბაკალავრი"),
+            "field_of_study": _both("Computer Science", "კომპიუტერული მეცნიერება"),
+            "start_date": "2015",
+            "end_date": "2019",
+            "is_current": False,
+        }
+    ],
+    "certifications": [_both("AWS Cloud Practitioner", "AWS ღრუბლის პრაქტიკოსი")],
+    "language": "mixed",
+    "extraction_method": "llm",
+}
 
 
 GEORGIAN_RESUME = """ნინო ბერიძე
@@ -120,11 +174,21 @@ class HeuristicExtractorTests(SimpleTestCase):
         self.assertEqual(resume.extraction_method, "heuristic")
 
     @patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key"))
-    def test_extract_resume_falls_back_when_llm_is_not_configured(self, _llm):
-        resume = extract_resume("ნინო ბერიძე\nუნარები\nPython, Django", filename="cv.pdf")
-        self.assertEqual(resume.extraction_method, "heuristic")
-        self.assertIn("llm_not_configured", resume.warnings)
-        self.assertTrue(any(skill.name_en == "Python" for skill in resume.skills))
+    def test_extract_resume_requires_ai(self, _llm):
+        with self.assertRaises(AiUnavailable):
+            extract_resume("ნინო ბერიძე\nუნარები\nPython, Django", filename="cv.pdf")
+
+    def test_complete_resume_has_no_missing_fields(self):
+        self.assertEqual(missing_fields(ResumeData.model_validate(COMPLETE_RESUME)), [])
+
+    def test_missing_fields_lists_every_empty_value(self):
+        gaps = missing_fields(ResumeData())
+        self.assertIn("full_name.en", gaps)
+        self.assertIn("email", gaps)
+        self.assertIn("skills", gaps)
+        self.assertIn("work_experience", gaps)
+        self.assertIn("education", gaps)
+        self.assertIn("certifications", gaps)
 
 
 class MatcherTests(SimpleTestCase):
@@ -253,24 +317,7 @@ class AtsApiTests(TestCase):
             password="pass12345",
         )
         self.client = APIClient()
-        self.resume_payload = {
-            "full_name": {"en": "Nino Beridze", "ka": "ნინო ბერიძე"},
-            "language": "mixed",
-            "skills": [
-                {"name_en": "Python", "name_ka": ""},
-                {"name_en": "Django", "name_ka": ""},
-                {"name_en": "PostgreSQL", "name_ka": ""},
-            ],
-            "work_experience": [
-                {
-                    "title": {"en": "Python Developer", "ka": ""},
-                    "company": {"en": "Acme", "ka": ""},
-                    "start_date": "2019",
-                    "end_date": "2024",
-                    "description": {"en": "Django and PostgreSQL", "ka": ""},
-                }
-            ],
-        }
+        self.resume_payload = COMPLETE_RESUME
 
     def test_parse_requires_auth(self):
         response = self.client.post("/api/ats/parse/", {})
@@ -292,13 +339,14 @@ class AtsApiTests(TestCase):
             content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
         self.client.force_authenticate(user=self.user)
-        with patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key")):
+        parsed = ResumeData.model_validate(COMPLETE_RESUME)
+        with patch("app.ats.extractor.engine.extract_with_llm", return_value=parsed):
             response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data["email"], "nino@example.com")
         self.assertEqual(response.data["parser_method"], "docx")
-        self.assertEqual(response.data["extraction_method"], "heuristic")
-        self.assertIn("llm_not_configured", response.data["warnings"])
+        self.assertEqual(response.data["extraction_method"], "llm")
+        self.assertEqual(response.data["full_name"]["ka"], "ნინო ბერიძე")
 
         saved = self.client.get("/api/me/resume/")
         self.assertEqual(saved.status_code, 200, saved.data)
@@ -306,23 +354,44 @@ class AtsApiTests(TestCase):
         self.assertEqual(saved.data["source_filename"], "cv.docx")
 
         self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, "ნინო")
-        self.assertEqual(self.user.last_name, "ბერიძე")
+        self.assertEqual(self.user.first_name, "Nino")
+        self.assertEqual(self.user.last_name, "Beridze")
         profile = self.client.get("/api/me/profile/")
         self.assertEqual(profile.status_code, 200, profile.data)
-        self.assertEqual(profile.data["first_name"], "ნინო")
-        self.assertEqual(profile.data["phone_number"], "+995 555 123 456")
+        self.assertEqual(profile.data["phone_number"], "+995555123456")
         self.assertIn("Django", profile.data["about_me"])
 
         work = self.client.get("/api/work-experiences/")
         self.assertEqual(work.status_code, 200, work.data)
         self.assertEqual(len(work.data), 1)
-        self.assertIn("პროგრამისტი", work.data[0]["job_title"])
+        self.assertEqual(work.data[0]["job_title"], "Python Developer")
 
         skills = self.client.get("/api/me/skills/")
         skill_names = {item["skill_name"] for item in skills.data}
         self.assertIn("Python", skill_names)
         self.assertIn("Django", skill_names)
+
+    def test_parse_errors_when_ai_leaves_a_field_empty(self):
+        upload = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 not-really", content_type="application/pdf")
+        self.client.force_authenticate(user=self.user)
+        partial = ResumeData(full_name=BilingualText(en="Nino Beridze", ka="ნინო ბერიძე"))
+        with patch("app.ats.parsers.extract_pdf", return_value=("Nino Beridze resume text " * 5, "digital", 1, [])):
+            with patch("app.ats.extractor.engine.extract_with_llm", return_value=partial):
+                response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, 422, response.data)
+        self.assertEqual(response.data["code"], "incomplete_resume")
+        self.assertIn("email", response.data["missing"])
+        saved = self.client.get("/api/me/resume/")
+        self.assertIsNone(saved.data["resume"])
+
+    def test_parse_errors_when_ai_is_not_configured(self):
+        upload = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 not-really", content_type="application/pdf")
+        self.client.force_authenticate(user=self.user)
+        with patch("app.ats.parsers.extract_pdf", return_value=("Nino Beridze resume text " * 5, "digital", 1, [])):
+            with patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key")):
+                response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, 503, response.data)
+        self.assertEqual(response.data["code"], "ai_unavailable")
 
     def test_resume_page_is_empty_before_parse(self):
         self.client.force_authenticate(user=self.user)
