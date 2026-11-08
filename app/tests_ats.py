@@ -188,7 +188,8 @@ class HeuristicExtractorTests(SimpleTestCase):
         self.assertIn("skills", gaps)
         self.assertIn("work_experience", gaps)
         self.assertIn("education", gaps)
-        self.assertIn("certifications", gaps)
+        self.assertNotIn("certifications", gaps)
+        self.assertNotIn("languages", gaps)
 
 
 class MatcherTests(SimpleTestCase):

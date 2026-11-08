@@ -312,8 +312,6 @@ def missing_fields(resume: ResumeData) -> list[str]:
         if not skill.name_ka.strip():
             missing.append(f"skills[{index}].name_ka")
 
-    if not resume.languages:
-        missing.append("languages")
     for index, language in enumerate(resume.languages):
         if not language.name_en.strip():
             missing.append(f"languages[{index}].name_en")
@@ -326,7 +324,6 @@ def missing_fields(resume: ResumeData) -> list[str]:
         prefix = f"work_experience[{index}]"
         require_text(f"{prefix}.title", role.title)
         require_text(f"{prefix}.company", role.company)
-        require_text(f"{prefix}.location", role.location)
         require_text(f"{prefix}.description", role.description)
         require_dates(prefix, role.start_date, role.end_date, role.is_current)
 
@@ -336,17 +333,50 @@ def missing_fields(resume: ResumeData) -> list[str]:
         prefix = f"education[{index}]"
         require_text(f"{prefix}.school", school.school)
         require_text(f"{prefix}.degree", school.degree)
-        require_text(f"{prefix}.field_of_study", school.field_of_study)
         require_dates(prefix, school.start_date, school.end_date, school.is_current)
 
-    if not resume.certifications:
-        missing.append("certifications")
     for index, item in enumerate(resume.certifications):
         require_text(f"certifications[{index}]", item)
 
     if resume.language not in {"en", "ka", "mixed"}:
         missing.append("language")
     return missing
+
+
+def _copy_blank(en: str, ka: str) -> tuple[str, str]:
+    en = (en or "").strip()
+    ka = (ka or "").strip()
+    if en and not ka:
+        return en, en
+    if ka and not en:
+        return ka, ka
+    return en, ka
+
+
+def fill_blank_translations(resume: ResumeData) -> ResumeData:
+    """Copy a filled language into the empty one so a one-language fact still counts."""
+    resume.full_name.en, resume.full_name.ka = _copy_blank(resume.full_name.en, resume.full_name.ka)
+    resume.headline.en, resume.headline.ka = _copy_blank(resume.headline.en, resume.headline.ka)
+    resume.location.en, resume.location.ka = _copy_blank(resume.location.en, resume.location.ka)
+    resume.summary.en, resume.summary.ka = _copy_blank(resume.summary.en, resume.summary.ka)
+    for skill in resume.skills:
+        skill.name_en, skill.name_ka = _copy_blank(skill.name_en, skill.name_ka)
+    for language in resume.languages:
+        language.name_en, language.name_ka = _copy_blank(language.name_en, language.name_ka)
+    for role in resume.work_experience:
+        role.title.en, role.title.ka = _copy_blank(role.title.en, role.title.ka)
+        role.company.en, role.company.ka = _copy_blank(role.company.en, role.company.ka)
+        role.location.en, role.location.ka = _copy_blank(role.location.en, role.location.ka)
+        role.description.en, role.description.ka = _copy_blank(role.description.en, role.description.ka)
+    for school in resume.education:
+        school.school.en, school.school.ka = _copy_blank(school.school.en, school.school.ka)
+        school.degree.en, school.degree.ka = _copy_blank(school.degree.en, school.degree.ka)
+        school.field_of_study.en, school.field_of_study.ka = _copy_blank(
+            school.field_of_study.en, school.field_of_study.ka
+        )
+    for item in resume.certifications:
+        item.en, item.ka = _copy_blank(item.en, item.ka)
+    return resume
 
 
 def format_validation_error(exc) -> str:

@@ -11,7 +11,7 @@ from app.ats.exceptions import (
     LlmNotConfigured,
 )
 from app.ats.extractor.llm import extract_with_llm
-from app.ats.schemas.resume import ResumeData, missing_fields
+from app.ats.schemas.resume import ResumeData, fill_blank_translations, missing_fields
 from app.ats.textutil import detect_language
 
 logger = logging.getLogger(__name__)
@@ -29,10 +29,11 @@ def extract_resume(text: str, filename: str = "") -> ResumeData:
         logger.exception("AI resume extraction failed")
         raise AiUnavailable("The AI could not parse this resume. Try the upload again.") from exc
 
+    resume = fill_blank_translations(resume)
     missing = missing_fields(resume)
     if missing:
         try:
-            resume = extract_with_llm(text, missing=missing)
+            resume = fill_blank_translations(extract_with_llm(text, missing=missing))
         except (LlmNotConfigured, LlmExtractionFailed, Exception) as exc:
             logger.exception("AI resume repair failed")
             raise AiUnavailable("The AI could not fill every resume field. Try the upload again.") from exc
