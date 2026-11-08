@@ -105,10 +105,20 @@ def _create_client():
     raise LlmNotConfigured()
 
 
+# Groq shut these down for free and developer accounts on 16 Aug 2026.
+_RETIRED_GROQ_MODELS = {
+    "llama-3.1-8b-instant": "openai/gpt-oss-20b",
+    "llama-3.3-70b-versatile": "openai/gpt-oss-120b",
+    "llama3-8b-8192": "openai/gpt-oss-20b",
+    "llama3-70b-8192": "openai/gpt-oss-120b",
+}
+
+
 def _groq_models() -> list[str]:
-    primary = str(get_setting("ATS_LLM_MODEL", "llama-3.3-70b-versatile") or "llama-3.3-70b-versatile")
+    primary = str(get_setting("ATS_LLM_MODEL", "openai/gpt-oss-120b") or "openai/gpt-oss-120b")
+    primary = _RETIRED_GROQ_MODELS.get(primary, primary)
     models = [primary]
-    fallback = "llama-3.1-8b-instant"
+    fallback = "openai/gpt-oss-20b"
     if fallback not in models:
         models.append(fallback)
     return models

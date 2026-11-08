@@ -20,7 +20,7 @@ def fetch_salary_from_groq(job_title: str, location: str = "global") -> str:
     
     try:
         chat = client.chat.completions.create(
-            model="llama-3.1-8b-instant", 
+            model="openai/gpt-oss-20b", 
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )
@@ -46,7 +46,7 @@ def fetch_profession_description_from_groq(job_title: str) -> str:
     
     try:
         chat = client.chat.completions.create(
-            model="llama-3.1-8b-instant", 
+            model="openai/gpt-oss-20b", 
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )

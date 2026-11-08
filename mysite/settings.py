@@ -175,7 +175,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # Set ATS_LLM_PROVIDER=openai to use OPENAI_API_KEY instead.
 # Scanned PDFs also need the tesseract (eng+kat) and poppler binaries on the host.
 ATS_LLM_PROVIDER = os.getenv("ATS_LLM_PROVIDER", "groq")
-ATS_LLM_MODEL = os.getenv("ATS_LLM_MODEL", "llama-3.3-70b-versatile")
+ATS_LLM_MODEL = os.getenv("ATS_LLM_MODEL", "openai/gpt-oss-120b")
 ATS_OCR_LANGS = os.getenv("ATS_OCR_LANGS", "eng+kat")
 
 
