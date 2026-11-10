@@ -20,7 +20,8 @@ Return one JSON object and nothing else.
 Rules:
 - Copy facts only from the resume. Never invent an email, phone, employer, school, date, skill, link, or job.
 - Read every section even when the heading is unusual. Keep each job and each school as its own entry. Do not merge two jobs.
-- Company names, job titles, school names, and descriptions must be copied character for character from the resume. Do not translate, paraphrase, summarize, or correct them.
+- For every job, decide the role, the employer, and the date range together. The job title is what the person did. The company is the organization that employed them. Never put the employer in the job title or the role in the company field.
+- A block may list the company above the role, the role above the company, or both on one line separated by | or —. Copy each value exactly as printed. Do not translate, paraphrase, summarize, or correct company names, titles, or descriptions.
 - Put that same original text in both "en" and "ka". Do not write a translation.
 - For a job description, copy the original bullet lines in order, separated by newline. Do not rewrite them into a new paragraph.
 - Copy dates exactly as printed, including the month name and the words Present, Current, or დღემდე. Do not reformat "Jan 2019" into "2019-01". Set is_current true when the resume says the role or study is current, and still keep the original end text.

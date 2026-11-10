@@ -34,6 +34,7 @@ def save_parsed_resume(user, resume: ResumeData):
     """Persist the formatted CV and write its details onto the user's profile page."""
     from app.models import UserResume
 
+    _keep_registered_name(user, resume)
     payload = resume.model_dump(mode="json")
     with transaction.atomic():
         record, _created = UserResume.objects.update_or_create(
@@ -102,19 +103,19 @@ def _apply_to_profile(user, resume: ResumeData) -> None:
         UserSkill.objects.get_or_create(user=user, skill=row, defaults={"points": 1})
 
 
-def _write_identity(user, resume: ResumeData) -> None:
-    from app.models import UserProfile
+def _keep_registered_name(user, resume: ResumeData) -> None:
+    """The name shown to the app is the one entered at registration, not the CV."""
+    first = (getattr(user, "first_name", "") or "").strip()
+    last = (getattr(user, "last_name", "") or "").strip()
+    registered = " ".join(part for part in (first, last) if part)
+    if not registered:
+        return
+    resume.full_name = BilingualText(en=registered, ka=registered)
 
-    first, last = _split_name(_primary(resume.full_name))
-    update_fields = []
-    if first:
-        user.first_name = first[:150]
-        update_fields.append("first_name")
-    if last:
-        user.last_name = last[:150]
-        update_fields.append("last_name")
-    if update_fields:
-        user.save(update_fields=update_fields)
+
+def _write_identity(user, resume: ResumeData) -> None:
+    """Copy contact details onto the profile. The registered name is left unchanged."""
+    from app.models import UserProfile
 
     profile, _created = UserProfile.objects.get_or_create(user=user)
     changed = []
@@ -148,15 +149,6 @@ def _text(value: BilingualText | None) -> str:
     if english and georgian and english != georgian:
         return f"{english}\n{georgian}"
     return english or georgian
-
-
-def _split_name(full_name: str) -> tuple[str, str]:
-    parts = [part for part in full_name.replace("\n", " ").split() if part]
-    if not parts:
-        return "", ""
-    if len(parts) == 1:
-        return parts[0], ""
-    return parts[0], " ".join(parts[1:])
 
 
 def _parse_date(value: str | None) -> date | None:

@@ -262,6 +262,11 @@ def _split_role_header(line: str) -> tuple[str, str]:
 
 
 def _parse_experience(text: str) -> list[WorkExperienceItem]:
+    from app.ats.extractor.experience import parse_experience_blocks
+
+    parsed = parse_experience_blocks(text)
+    if parsed:
+        return parsed
     roles: list[WorkExperienceItem] = []
     blocks = _blocks(text) or ([text] if text.strip() else [])
     for block in blocks:
@@ -270,6 +275,7 @@ def _parse_experience(text: str) -> list[WorkExperienceItem]:
             continue
         span = _extract_date_span(block)
         title, company = _split_role_header(lines[0])
+        title, company = _ordered_role(title, company)
         description = " ".join(lines[1:])
         if not title and not company and not description:
             continue
@@ -284,6 +290,12 @@ def _parse_experience(text: str) -> list[WorkExperienceItem]:
             )
         )
     return roles
+
+
+def _ordered_role(title: str, company: str) -> tuple[str, str]:
+    from app.ats.extractor.experience import swap_if_title_and_company_are_reversed
+
+    return swap_if_title_and_company_are_reversed(title, company)
 
 
 def _parse_education(text: str) -> list[EducationItem]:

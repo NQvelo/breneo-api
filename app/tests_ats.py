@@ -15,6 +15,7 @@ from app.ats.exceptions import (
     UnsupportedResumeFormat,
 )
 from app.ats.extractor.engine import extract_resume
+from app.ats.extractor.experience import parse_experience_blocks
 from app.ats.extractor.ground import ground_resume
 from app.ats.extractor.heuristic import extract_with_heuristics
 from app.ats.matcher.engine import score_resume
@@ -210,6 +211,7 @@ class HeuristicExtractorTests(SimpleTestCase):
         )
         grounded = ground_resume(resume, source)
         role = grounded.work_experience[0]
+        self.assertEqual(role.title.en, "Python Developer")
         self.assertEqual(role.company.en, "Acme Corp")
         self.assertEqual(role.company.ka, "Acme Corp")
         self.assertEqual(role.start_date, "Jan 2019")
@@ -217,6 +219,33 @@ class HeuristicExtractorTests(SimpleTestCase):
         self.assertIn("Built Django services on PostgreSQL.", role.description.en)
         self.assertIn("Kept the API under 200ms.", role.description.en)
         self.assertNotIn("Developed web services", role.description.en)
+
+    def test_company_above_the_role_stays_the_employer(self):
+        source = "\n".join(
+            [
+                "Experience",
+                "Breneo",
+                "Product Designer",
+                "Jan 2025 – Present",
+                "Designed the hiring flow.",
+                "",
+                "Acme Corp — Software Engineer",
+                "2019 - 2024",
+                "Built the API.",
+            ]
+        )
+        roles = parse_experience_blocks(source)
+        self.assertEqual(len(roles), 2)
+        self.assertEqual(roles[0].title.en, "Product Designer")
+        self.assertEqual(roles[0].company.en, "Breneo")
+        self.assertEqual(roles[0].start_date, "Jan 2025")
+        self.assertEqual(roles[0].end_date, "Present")
+        self.assertTrue(roles[0].is_current)
+        self.assertEqual(roles[0].description.en, "Designed the hiring flow.")
+        self.assertEqual(roles[1].title.en, "Software Engineer")
+        self.assertEqual(roles[1].company.en, "Acme Corp")
+        self.assertEqual(roles[1].start_date, "2019")
+        self.assertEqual(roles[1].end_date, "2024")
 
     def test_complete_resume_has_no_missing_fields(self):
         self.assertEqual(missing_fields(ResumeData.model_validate(COMPLETE_RESUME)), [])
@@ -358,6 +387,8 @@ class AtsApiTests(TestCase):
             username="ats_user",
             email="ats@example.com",
             password="pass12345",
+            first_name="Ana",
+            last_name="Kapanadze",
         )
         self.client = APIClient()
         self.resume_payload = COMPLETE_RESUME
@@ -389,7 +420,8 @@ class AtsApiTests(TestCase):
         self.assertEqual(response.data["email"], "nino@example.com")
         self.assertEqual(response.data["parser_method"], "docx")
         self.assertEqual(response.data["extraction_method"], "llm")
-        self.assertEqual(response.data["full_name"]["ka"], "ნინო ბერიძე")
+        self.assertEqual(response.data["full_name"]["en"], "Ana Kapanadze")
+        self.assertEqual(response.data["full_name"]["ka"], "Ana Kapanadze")
 
         saved = self.client.get("/api/me/resume/")
         self.assertEqual(saved.status_code, 200, saved.data)
@@ -397,17 +429,20 @@ class AtsApiTests(TestCase):
         self.assertEqual(saved.data["source_filename"], "cv.docx")
 
         self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, "Nino")
-        self.assertEqual(self.user.last_name, "Beridze")
+        self.assertEqual(self.user.first_name, "Ana")
+        self.assertEqual(self.user.last_name, "Kapanadze")
         profile = self.client.get("/api/me/profile/")
         self.assertEqual(profile.status_code, 200, profile.data)
+        self.assertEqual(profile.data["first_name"], "Ana")
+        self.assertEqual(profile.data["last_name"], "Kapanadze")
         self.assertEqual(profile.data["phone_number"], "+995555123456")
         self.assertIn("Django", profile.data["about_me"])
 
         work = self.client.get("/api/work-experiences/")
         self.assertEqual(work.status_code, 200, work.data)
         self.assertEqual(len(work.data), 1)
-        self.assertEqual(work.data[0]["job_title"], "Python Developer")
+        self.assertEqual(work.data[0]["job_title"], "პროგრამისტი")
+        self.assertEqual(work.data[0]["company"], "კომპანია")
 
         skills = self.client.get("/api/me/skills/")
         skill_names = {item["skill_name"] for item in skills.data}
@@ -422,10 +457,10 @@ class AtsApiTests(TestCase):
             with patch("app.ats.extractor.engine.extract_with_llm", return_value=partial):
                 response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
         self.assertEqual(response.status_code, 200, response.data)
-        self.assertEqual(response.data["full_name"]["en"], "Nino Beridze")
+        self.assertEqual(response.data["full_name"]["en"], "Ana Kapanadze")
         self.assertIn("missing_email", response.data["warnings"])
         saved = self.client.get("/api/me/resume/")
-        self.assertEqual(saved.data["resume"]["full_name"]["en"], "Nino Beridze")
+        self.assertEqual(saved.data["resume"]["full_name"]["en"], "Ana Kapanadze")
 
     def test_parse_uses_text_parser_when_ai_is_not_configured(self):
         upload = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 not-really", content_type="application/pdf")
@@ -489,10 +524,10 @@ class AtsApiTests(TestCase):
         self.assertIn("PostgreSQL", response.data["match"]["matched_keywords"])
         self.assertEqual(response.data["match"]["required_years_experience"], 3.0)
         self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, "Nino")
-        self.assertEqual(self.user.last_name, "Beridze")
+        self.assertEqual(self.user.first_name, "Ana")
+        self.assertEqual(self.user.last_name, "Kapanadze")
         saved = self.client.get("/api/me/resume/")
-        self.assertEqual(saved.data["resume"]["full_name"]["en"], "Nino Beridze")
+        self.assertEqual(saved.data["resume"]["full_name"]["en"], "Ana Kapanadze")
 
     def test_match_unknown_job(self):
         self.client.force_authenticate(user=self.user)

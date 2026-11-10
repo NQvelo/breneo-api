@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from app.ats.extractor.experience import parse_experience_blocks, swap_if_title_and_company_are_reversed
 from app.ats.extractor.heuristic import _match_header
 from app.ats.schemas.resume import BilingualText, ResumeData
 
@@ -31,14 +32,26 @@ def ground_resume(resume: ResumeData, source: str) -> ResumeData:
     text = source or ""
     if not text.strip():
         return resume
-    for role in resume.work_experience:
-        _ground_role(role, text)
+    aligned = parse_experience_blocks(text)
+    if aligned:
+        resume.work_experience = aligned
+    else:
+        for role in resume.work_experience:
+            _swap_role(role)
+            _ground_role(role, text)
     for school in resume.education:
         _ground_school(school, text)
     snapped = _snap_bilingual(resume.summary, text)
     if snapped:
         resume.summary = snapped
     return resume
+
+
+def _swap_role(role) -> None:
+    title, company = swap_if_title_and_company_are_reversed(_text_of(role.title), _text_of(role.company))
+    if title != _text_of(role.title) or company != _text_of(role.company):
+        role.title = _verbatim(title)
+        role.company = _verbatim(company)
 
 
 def _ground_role(role, source: str) -> None:
