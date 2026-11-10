@@ -176,11 +176,9 @@ class HeuristicExtractorTests(SimpleTestCase):
         self.assertEqual(resume.extraction_method, "heuristic")
 
     @patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key"))
-    def test_extract_resume_uses_text_parser_when_ai_is_down(self, _llm):
-        resume = extract_resume("ნინო ბერიძე\nუნარები\nPython, Django", filename="cv.pdf")
-        self.assertEqual(resume.extraction_method, "heuristic")
-        self.assertIn("llm_not_configured", resume.warnings)
-        self.assertTrue(resume.full_name.ka or resume.skills)
+    def test_extract_resume_requires_the_model(self, _llm):
+        with self.assertRaises(LlmNotConfigured):
+            extract_resume("ნინო ბერიძე\nუნარები\nPython, Django", filename="cv.pdf")
 
     def test_dates_stay_as_printed_on_the_cv(self):
         self.assertEqual(_clean_date("Jan 2024"), "Jan 2024")
@@ -435,14 +433,14 @@ class AtsApiTests(TestCase):
         self.assertEqual(profile.status_code, 200, profile.data)
         self.assertEqual(profile.data["first_name"], "Ana")
         self.assertEqual(profile.data["last_name"], "Kapanadze")
-        self.assertEqual(profile.data["phone_number"], "+995 555 123 456")
+        self.assertEqual(profile.data["phone_number"], "+995555123456")
         self.assertIn("Django", profile.data["about_me"])
 
         work = self.client.get("/api/work-experiences/")
         self.assertEqual(work.status_code, 200, work.data)
         self.assertEqual(len(work.data), 1)
-        self.assertEqual(work.data[0]["job_title"], "პროგრამისტი")
-        self.assertEqual(work.data[0]["company"], "კომპანია")
+        self.assertEqual(work.data[0]["job_title"], "Python Developer")
+        self.assertEqual(work.data[0]["company"], "Acme")
 
         skills = self.client.get("/api/me/skills/")
         skill_names = {item["skill_name"] for item in skills.data}
@@ -465,15 +463,13 @@ class AtsApiTests(TestCase):
         saved = self.client.get("/api/me/resume/")
         self.assertEqual(saved.data["resume"]["full_name"]["en"], "Ana Kapanadze")
 
-    def test_parse_uses_text_parser_when_ai_is_not_configured(self):
+    def test_parse_fails_when_ai_is_not_configured(self):
         upload = SimpleUploadedFile("cv.txt", GEORGIAN_RESUME.encode(), content_type="text/plain")
         self.client.force_authenticate(user=self.user)
         with patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key")):
             response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
-        self.assertEqual(response.status_code, 200, response.data)
-        self.assertEqual(response.data["extraction_method"], "heuristic")
-        self.assertEqual(response.data["email"], "nino@example.com")
-        self.assertIn("llm_not_configured", response.data["warnings"])
+        self.assertEqual(response.status_code, 503, response.data)
+        self.assertEqual(response.data["code"], "ai_unavailable")
 
     def test_resume_page_is_empty_before_parse(self):
         self.client.force_authenticate(user=self.user)

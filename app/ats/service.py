@@ -6,13 +6,17 @@ import logging
 
 from app.ats.config import get_int_setting
 from app.ats.exceptions import (
+    AiUnavailable,
     EmptyResumeError,
     JobDescriptionMissing,
     JobNotFound,
+    LlmExtractionFailed,
+    LlmNotConfigured,
     ResumeTooLarge,
 )
-from app.ats.extractor.engine import parse_file
+from app.ats.extractor.engine import extract_resume
 from app.ats.matcher.engine import score_resume
+from app.ats.parsers import read_resume
 from app.ats.schemas.match import MatchResult
 from app.ats.schemas.resume import ResumeData
 
@@ -22,18 +26,44 @@ _DEFAULT_MAX_BYTES = 10 * 1024 * 1024
 
 
 def parse_uploaded_resume(uploaded_file) -> tuple[ResumeData, str]:
-    """Read an uploaded resume and return structured data plus ordered source text."""
+    """Extract plain text from the file, send it to the model, and return the JSON."""
     data, filename = read_upload(uploaded_file)
-    resume, source = parse_file(data, filename)
+    document = read_resume(data, filename)
+    try:
+        resume = extract_resume(document.text, filename=document.filename)
+    except LlmNotConfigured as exc:
+        raise AiUnavailable("Resume parsing needs a Groq API key.") from exc
+    except LlmExtractionFailed as exc:
+        raise AiUnavailable("The language model could not read this resume.") from exc
+    resume.parser_method = document.method
+    resume.warnings = list(dict.fromkeys([*document.warnings, *resume.warnings, *_gap_warnings(resume)]))
+    resume.parsing_metadata = {
+        "extraction_methods_used": [document.method, "llm"],
+        "pages_processed": document.page_count,
+        "warnings": list(resume.warnings),
+    }
     logger.info(
         "Parsed resume file=%s method=%s pages=%s chars=%s extraction=%s",
-        resume.source_filename,
-        resume.parser_method,
-        (resume.parsing_metadata or {}).get("pages_processed"),
-        len(source),
+        document.filename,
+        document.method,
+        document.page_count,
+        len(document.text),
         resume.extraction_method,
     )
-    return resume, source
+    return resume, document.text
+
+
+def _gap_warnings(resume: ResumeData) -> list[str]:
+    notes = []
+    if resume.full_name.is_empty():
+        notes.append("missing_full_name")
+    if not resume.email:
+        notes.append("missing_email")
+    if not resume.phone:
+        notes.append("missing_phone")
+    if not resume.work_experience:
+        notes.append("missing_work")
+    return notes
 
 
 def match_resume(
