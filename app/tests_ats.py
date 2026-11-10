@@ -435,7 +435,7 @@ class AtsApiTests(TestCase):
         self.assertEqual(profile.status_code, 200, profile.data)
         self.assertEqual(profile.data["first_name"], "Ana")
         self.assertEqual(profile.data["last_name"], "Kapanadze")
-        self.assertEqual(profile.data["phone_number"], "+995555123456")
+        self.assertEqual(profile.data["phone_number"], "+995 555 123 456")
         self.assertIn("Django", profile.data["about_me"])
 
         work = self.client.get("/api/work-experiences/")
@@ -450,12 +450,15 @@ class AtsApiTests(TestCase):
         self.assertIn("Django", skill_names)
 
     def test_parse_keeps_a_partial_cv_and_reports_the_gaps(self):
-        upload = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 not-really", content_type="application/pdf")
+        upload = SimpleUploadedFile(
+            "cv.txt",
+            b"Nino Beridze\nPython developer with Django experience\n",
+            content_type="text/plain",
+        )
         self.client.force_authenticate(user=self.user)
         partial = ResumeData(full_name=BilingualText(en="Nino Beridze", ka="ნინო ბერიძე"))
-        with patch("app.ats.parsers.extract_pdf", return_value=("Nino Beridze resume text " * 5, "digital", 1, [])):
-            with patch("app.ats.extractor.engine.extract_with_llm", return_value=partial):
-                response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
+        with patch("app.ats.extractor.engine.extract_with_llm", return_value=partial):
+            response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data["full_name"]["en"], "Ana Kapanadze")
         self.assertIn("missing_email", response.data["warnings"])
@@ -463,11 +466,10 @@ class AtsApiTests(TestCase):
         self.assertEqual(saved.data["resume"]["full_name"]["en"], "Ana Kapanadze")
 
     def test_parse_uses_text_parser_when_ai_is_not_configured(self):
-        upload = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 not-really", content_type="application/pdf")
+        upload = SimpleUploadedFile("cv.txt", GEORGIAN_RESUME.encode(), content_type="text/plain")
         self.client.force_authenticate(user=self.user)
-        with patch("app.ats.parsers.extract_pdf", return_value=(GEORGIAN_RESUME, "digital", 1, [])):
-            with patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key")):
-                response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
+        with patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key")):
+            response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data["extraction_method"], "heuristic")
         self.assertEqual(response.data["email"], "nino@example.com")

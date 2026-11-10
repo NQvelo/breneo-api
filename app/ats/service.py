@@ -11,9 +11,8 @@ from app.ats.exceptions import (
     JobNotFound,
     ResumeTooLarge,
 )
-from app.ats.extractor.engine import extract_resume
+from app.ats.extractor.engine import parse_file
 from app.ats.matcher.engine import score_resume
-from app.ats.parsers import read_resume
 from app.ats.schemas.match import MatchResult
 from app.ats.schemas.resume import ResumeData
 
@@ -23,29 +22,18 @@ _DEFAULT_MAX_BYTES = 10 * 1024 * 1024
 
 
 def parse_uploaded_resume(uploaded_file) -> tuple[ResumeData, str]:
-    """Read an uploaded resume and return structured data plus cleaned source text."""
+    """Read an uploaded resume and return structured data plus ordered source text."""
     data, filename = read_upload(uploaded_file)
-    document = read_resume(data, filename)
-    resume = extract_resume(document.text, filename=document.filename)
-    resume.parser_method = document.method
-    resume.warnings = list(dict.fromkeys([*document.warnings, *resume.warnings]))
-    metadata = dict(resume.parsing_metadata or {})
-    methods = list(metadata.get("extraction_methods_used") or [])
-    if document.method and document.method not in methods:
-        methods.insert(0, document.method)
-    metadata["extraction_methods_used"] = methods
-    metadata["pages_processed"] = document.page_count
-    metadata["warnings"] = list(resume.warnings)
-    resume.parsing_metadata = metadata
+    resume, source = parse_file(data, filename)
     logger.info(
         "Parsed resume file=%s method=%s pages=%s chars=%s extraction=%s",
-        document.filename,
-        document.method,
-        document.page_count,
-        len(document.text),
+        resume.source_filename,
+        resume.parser_method,
+        (resume.parsing_metadata or {}).get("pages_processed"),
+        len(source),
         resume.extraction_method,
     )
-    return resume, document.text
+    return resume, source
 
 
 def match_resume(
