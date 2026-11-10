@@ -15,6 +15,7 @@ from app.ats.exceptions import (
     UnsupportedResumeFormat,
 )
 from app.ats.extractor.engine import extract_resume
+from app.ats.extractor.ground import ground_resume
 from app.ats.extractor.heuristic import extract_with_heuristics
 from app.ats.matcher.engine import score_resume
 from app.ats.parsers import read_resume
@@ -151,7 +152,7 @@ class ResumeSchemaTests(SimpleTestCase):
             {"title": {"en": "Developer"}, "end_date": "present"}
         )
         self.assertTrue(role.is_current)
-        self.assertIsNone(role.end_date)
+        self.assertEqual(role.end_date, "present")
 
     def test_string_skill_keeps_georgian_on_the_georgian_side(self):
         resume = ResumeData.model_validate({"skills": ["Python", "გუნდური მუშაობა"]})
@@ -180,12 +181,42 @@ class HeuristicExtractorTests(SimpleTestCase):
         self.assertIn("llm_not_configured", resume.warnings)
         self.assertTrue(resume.full_name.ka or resume.skills)
 
-    def test_dates_accept_month_names_and_ocr_digits(self):
-        self.assertEqual(_clean_date("Jan 2024"), "2024-01")
-        self.assertEqual(_clean_date("01/2024"), "2024-01")
-        self.assertEqual(_clean_date("2024/01"), "2024-01")
-        self.assertEqual(_clean_date("202O"), "2020")
-        self.assertIsNone(_clean_date("Present"))
+    def test_dates_stay_as_printed_on_the_cv(self):
+        self.assertEqual(_clean_date("Jan 2024"), "Jan 2024")
+        self.assertEqual(_clean_date("01/2024"), "01/2024")
+        self.assertEqual(_clean_date("2024/01"), "2024/01")
+        self.assertEqual(_clean_date("202O"), "202O")
+        self.assertEqual(_clean_date("Present"), "Present")
+
+    def test_job_text_is_replaced_with_the_cv_wording(self):
+        source = "\n".join(
+            [
+                "Python Developer | Acme Corp | Jan 2019 - Present",
+                "Built Django services on PostgreSQL.",
+                "Kept the API under 200ms.",
+            ]
+        )
+        resume = ResumeData(
+            work_experience=[
+                WorkExperienceItem(
+                    title=BilingualText(en="Software Engineer"),
+                    company=BilingualText(en="Acme Corporation"),
+                    description=BilingualText(en="Developed web services for the company."),
+                    start_date="2019-01",
+                    end_date=None,
+                    is_current=True,
+                )
+            ]
+        )
+        grounded = ground_resume(resume, source)
+        role = grounded.work_experience[0]
+        self.assertEqual(role.company.en, "Acme Corp")
+        self.assertEqual(role.company.ka, "Acme Corp")
+        self.assertEqual(role.start_date, "Jan 2019")
+        self.assertEqual(role.end_date, "Present")
+        self.assertIn("Built Django services on PostgreSQL.", role.description.en)
+        self.assertIn("Kept the API under 200ms.", role.description.en)
+        self.assertNotIn("Developed web services", role.description.en)
 
     def test_complete_resume_has_no_missing_fields(self):
         self.assertEqual(missing_fields(ResumeData.model_validate(COMPLETE_RESUME)), [])

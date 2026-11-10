@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date, datetime
 
 from django.db import transaction
@@ -13,6 +14,20 @@ logger = logging.getLogger(__name__)
 
 _MAX_ROWS = 10
 _DATE_FORMATS = ("%Y-%m-%d", "%Y-%m", "%Y")
+_MONTH_NUMBERS = {
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+}
 
 
 def save_parsed_resume(user, resume: ResumeData):
@@ -148,6 +163,12 @@ def _parse_date(value: str | None) -> date | None:
     if not value:
         return None
     text = value.strip()
+    named = re.fullmatch(r"([A-Za-z]{3,9})\.?\s+(\d{4})", text)
+    if named and named.group(1).lower()[:3] in _MONTH_NUMBERS:
+        return date(int(named.group(2)), _MONTH_NUMBERS[named.group(1).lower()[:3]], 1)
+    slash = re.fullmatch(r"(\d{1,2})[./](\d{4})", text)
+    if slash and 1 <= int(slash.group(1)) <= 12:
+        return date(int(slash.group(2)), int(slash.group(1)), 1)
     for fmt in _DATE_FORMATS:
         try:
             parsed = datetime.strptime(text, fmt).date()

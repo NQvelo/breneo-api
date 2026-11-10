@@ -6,6 +6,7 @@ import logging
 import re
 
 from app.ats.exceptions import EmptyResumeError, LlmExtractionFailed, LlmNotConfigured
+from app.ats.extractor.ground import ground_resume
 from app.ats.extractor.heuristic import extract_with_heuristics
 from app.ats.extractor.llm import extract_with_llm
 from app.ats.schemas.resume import ResumeData, fill_blank_translations
@@ -24,7 +25,9 @@ def extract_resume(text: str, filename: str = "") -> ResumeData:
     resume = fill_blank_translations(resume)
     if from_model and not _has_facts(resume):
         resume = _repair(resume, text)
+    resume = ground_resume(resume, text)
     resume = _recover_gaps(resume, text)
+    resume = ground_resume(resume, text)
     resume = fill_blank_translations(resume)
     if not _has_facts(resume):
         raise EmptyResumeError(

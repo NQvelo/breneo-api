@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -68,89 +67,18 @@ def _mark_ongoing(data):
     end = data.get("end_date")
     if isinstance(end, str) and end.strip().lower() in _ONGOING_MARKERS:
         data = dict(data)
-        data["end_date"] = None
         data["is_current"] = True
     return data
 
 
-_MONTHS = {
-    "jan": "01",
-    "january": "01",
-    "feb": "02",
-    "february": "02",
-    "mar": "03",
-    "march": "03",
-    "apr": "04",
-    "april": "04",
-    "may": "05",
-    "jun": "06",
-    "june": "06",
-    "jul": "07",
-    "july": "07",
-    "aug": "08",
-    "august": "08",
-    "sep": "09",
-    "sept": "09",
-    "september": "09",
-    "oct": "10",
-    "october": "10",
-    "nov": "11",
-    "november": "11",
-    "dec": "12",
-    "december": "12",
-}
-
-
 def _clean_date(value):
+    """Keep the date text printed on the CV. Do not reformat it."""
     if value is None:
         return None
-    text = str(value).strip().replace("—", "-").replace("–", "-").replace(".", "/")
-    if text.lower() in _EMPTY_DATES or text.lower() in _ONGOING_MARKERS:
+    text = str(value).strip()
+    if text.lower() in _EMPTY_DATES:
         return None
-    text = _fix_ocr_date(text)
-    normalized = _normalize_date(text)
-    return normalized or text
-
-
-def _fix_ocr_date(text: str) -> str:
-    """Turn obvious OCR digit mistakes inside a date into digits."""
-    if not re.search(r"\d", text):
-        return text
-    chars: list[str] = []
-    for char in text:
-        previous = chars[-1] if chars else ""
-        if char in "Oo" and previous.isdigit():
-            chars.append("0")
-        elif char in "Il|" and previous.isdigit():
-            chars.append("1")
-        else:
-            chars.append(char)
-    return "".join(chars)
-
-
-def _normalize_date(text: str) -> str | None:
-    month_name = re.fullmatch(r"([A-Za-z]{3,9})\s+(\d{4})", text)
-    if month_name and month_name.group(1).lower() in _MONTHS:
-        return f"{month_name.group(2)}-{_MONTHS[month_name.group(1).lower()]}"
-    month_first = re.fullmatch(r"(\d{1,2})/(\d{4})", text)
-    if month_first:
-        month = int(month_first.group(1))
-        if 1 <= month <= 12:
-            return f"{month_first.group(2)}-{month:02d}"
-    year_first = re.fullmatch(r"(\d{4})/(\d{1,2})", text)
-    if year_first:
-        month = int(year_first.group(2))
-        if 1 <= month <= 12:
-            return f"{year_first.group(1)}-{month:02d}"
-    year_only = re.fullmatch(r"(?:19|20)\d{2}", text)
-    if year_only:
-        return text
-    year_month = re.fullmatch(r"((?:19|20)\d{2})-(\d{1,2})(?:-\d{1,2})?", text)
-    if year_month:
-        month = int(year_month.group(2))
-        if 1 <= month <= 12:
-            return f"{year_month.group(1)}-{month:02d}"
-    return None
+    return text
 
 
 def _clean_bool(value):

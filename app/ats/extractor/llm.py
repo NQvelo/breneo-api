@@ -20,11 +20,10 @@ Return one JSON object and nothing else.
 Rules:
 - Copy facts only from the resume. Never invent an email, phone, employer, school, date, skill, link, or job.
 - Read every section even when the heading is unusual. Keep each job and each school as its own entry. Do not merge two jobs.
-- Put the original wording in en or ka, and a faithful translation in the other language when you can. If you cannot translate, leave that language empty. Do not drop the fact.
-- Tool names such as Python, Django, and SQL stay the same in both languages.
-- Georgian text in "ka" fields must be Mkhedruli Unicode.
-- For each job, put responsibilities, achievements, metrics, and tools in description. Set employment_type only when the resume states it.
-- Dates are "YYYY" or "YYYY-MM". "Jan 2024", "01/2024", and "2024/01" all become "2024-01". Set is_current true and end_date null when the resume says the role or study is current, present, or now.
+- Company names, job titles, school names, and descriptions must be copied character for character from the resume. Do not translate, paraphrase, summarize, or correct them.
+- Put that same original text in both "en" and "ka". Do not write a translation.
+- For a job description, copy the original bullet lines in order, separated by newline. Do not rewrite them into a new paragraph.
+- Copy dates exactly as printed, including the month name and the words Present, Current, or დღემდე. Do not reformat "Jan 2019" into "2019-01". Set is_current true when the resume says the role or study is current, and still keep the original end text.
 - Put LinkedIn, GitHub, portfolio, Behance, Dribbble, and other URLs in links.
 - Put projects, awards, volunteer work, publications, and other uncommon sections in projects, awards, or other_sections. Do not discard them.
 - Leave lists empty when the resume does not contain that section.
@@ -169,7 +168,7 @@ def _extract_chunk(
         )
     user_prompt = (
         f"{part}{repair}"
-        "Fill this JSON shape from the resume. Keep every fact you can read. Leave a field empty when the resume does not contain it.\n"
+        "Fill this JSON shape from the resume. Copy company names, descriptions, and dates exactly as written. Leave a field empty when the resume does not contain it.\n"
         f"{json.dumps(_SKELETON, ensure_ascii=False)}\n\n"
         f"RESUME:\n{text}"
     )
@@ -204,7 +203,7 @@ def _complete(client, models: list[str], messages: list[dict]) -> tuple[str, str
                 kwargs = {
                     "model": model,
                     "messages": messages,
-                    "temperature": 0.1,
+                    "temperature": 0,
                     "max_tokens": 4096,
                 }
                 if json_mode:
