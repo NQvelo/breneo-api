@@ -29,6 +29,14 @@ def parse_uploaded_resume(uploaded_file) -> tuple[ResumeData, str]:
     resume = extract_resume(document.text, filename=document.filename)
     resume.parser_method = document.method
     resume.warnings = list(dict.fromkeys([*document.warnings, *resume.warnings]))
+    metadata = dict(resume.parsing_metadata or {})
+    methods = list(metadata.get("extraction_methods_used") or [])
+    if document.method and document.method not in methods:
+        methods.insert(0, document.method)
+    metadata["extraction_methods_used"] = methods
+    metadata["pages_processed"] = document.page_count
+    metadata["warnings"] = list(resume.warnings)
+    resume.parsing_metadata = metadata
     logger.info(
         "Parsed resume file=%s method=%s pages=%s chars=%s extraction=%s",
         document.filename,

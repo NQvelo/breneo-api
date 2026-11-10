@@ -7,7 +7,6 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from rest_framework.test import APIClient
 
 from app.ats.exceptions import (
-    AiUnavailable,
     CorruptResumeFile,
     EmptyResumeError,
     LlmNotConfigured,
@@ -26,6 +25,7 @@ from app.ats.schemas.resume import (
     ResumeData,
     SkillItem,
     WorkExperienceItem,
+    _clean_date,
     missing_fields,
 )
 from app.ats.service import read_upload
@@ -174,9 +174,18 @@ class HeuristicExtractorTests(SimpleTestCase):
         self.assertEqual(resume.extraction_method, "heuristic")
 
     @patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key"))
-    def test_extract_resume_requires_ai(self, _llm):
-        with self.assertRaises(AiUnavailable):
-            extract_resume("ნინო ბერიძე\nუნარები\nPython, Django", filename="cv.pdf")
+    def test_extract_resume_uses_text_parser_when_ai_is_down(self, _llm):
+        resume = extract_resume("ნინო ბერიძე\nუნარები\nPython, Django", filename="cv.pdf")
+        self.assertEqual(resume.extraction_method, "heuristic")
+        self.assertIn("llm_not_configured", resume.warnings)
+        self.assertTrue(resume.full_name.ka or resume.skills)
+
+    def test_dates_accept_month_names_and_ocr_digits(self):
+        self.assertEqual(_clean_date("Jan 2024"), "2024-01")
+        self.assertEqual(_clean_date("01/2024"), "2024-01")
+        self.assertEqual(_clean_date("2024/01"), "2024-01")
+        self.assertEqual(_clean_date("202O"), "2020")
+        self.assertIsNone(_clean_date("Present"))
 
     def test_complete_resume_has_no_missing_fields(self):
         self.assertEqual(missing_fields(ResumeData.model_validate(COMPLETE_RESUME)), [])
@@ -253,8 +262,10 @@ class MatcherTests(SimpleTestCase):
 
 
 class ParserErrorTests(SimpleTestCase):
-    def test_rejects_unknown_extension_and_legacy_doc(self):
+    def test_rejects_unknown_extension_and_unreadable_doc(self):
         with self.assertRaises(UnsupportedResumeFormat):
+            read_resume(b"hello resume", "cv.xyz")
+        with self.assertRaises(EmptyResumeError):
             read_resume(b"hello resume", "cv.txt")
         with self.assertRaises(UnsupportedResumeFormat):
             read_resume(b"hello", "cv.doc")
@@ -372,27 +383,29 @@ class AtsApiTests(TestCase):
         self.assertIn("Python", skill_names)
         self.assertIn("Django", skill_names)
 
-    def test_parse_errors_when_ai_leaves_a_field_empty(self):
+    def test_parse_keeps_a_partial_cv_and_reports_the_gaps(self):
         upload = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 not-really", content_type="application/pdf")
         self.client.force_authenticate(user=self.user)
         partial = ResumeData(full_name=BilingualText(en="Nino Beridze", ka="ნინო ბერიძე"))
         with patch("app.ats.parsers.extract_pdf", return_value=("Nino Beridze resume text " * 5, "digital", 1, [])):
             with patch("app.ats.extractor.engine.extract_with_llm", return_value=partial):
                 response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
-        self.assertEqual(response.status_code, 422, response.data)
-        self.assertEqual(response.data["code"], "incomplete_resume")
-        self.assertIn("email", response.data["missing"])
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["full_name"]["en"], "Nino Beridze")
+        self.assertIn("missing_email", response.data["warnings"])
         saved = self.client.get("/api/me/resume/")
-        self.assertIsNone(saved.data["resume"])
+        self.assertEqual(saved.data["resume"]["full_name"]["en"], "Nino Beridze")
 
-    def test_parse_errors_when_ai_is_not_configured(self):
+    def test_parse_uses_text_parser_when_ai_is_not_configured(self):
         upload = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 not-really", content_type="application/pdf")
         self.client.force_authenticate(user=self.user)
-        with patch("app.ats.parsers.extract_pdf", return_value=("Nino Beridze resume text " * 5, "digital", 1, [])):
+        with patch("app.ats.parsers.extract_pdf", return_value=(GEORGIAN_RESUME, "digital", 1, [])):
             with patch("app.ats.extractor.engine.extract_with_llm", side_effect=LlmNotConfigured("no key")):
                 response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
-        self.assertEqual(response.status_code, 503, response.data)
-        self.assertEqual(response.data["code"], "ai_unavailable")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["extraction_method"], "heuristic")
+        self.assertEqual(response.data["email"], "nino@example.com")
+        self.assertIn("llm_not_configured", response.data["warnings"])
 
     def test_resume_page_is_empty_before_parse(self):
         self.client.force_authenticate(user=self.user)
@@ -400,12 +413,31 @@ class AtsApiTests(TestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertIsNone(response.data["resume"])
 
-    def test_parse_rejects_text_file(self):
-        upload = SimpleUploadedFile("notes.txt", b"hello resume text here", content_type="text/plain")
+    def test_parse_plain_text_resume(self):
+        body = b"Nino Beridze\nnino@example.com\n+995555123456\nPython Developer\nSkills: Python, Django\n"
+        upload = SimpleUploadedFile("cv.txt", body, content_type="text/plain")
         self.client.force_authenticate(user=self.user)
-        response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
-        self.assertEqual(response.status_code, 415)
-        self.assertEqual(response.data["code"], "unsupported_format")
+        parsed = ResumeData.model_validate(COMPLETE_RESUME)
+        with patch("app.ats.extractor.engine.extract_with_llm", return_value=parsed):
+            response = self.client.post("/api/ats/parse/", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["parser_method"], "txt")
+        self.assertEqual(response.data["email"], "nino@example.com")
+
+    def test_html_and_rtf_keep_visible_text(self):
+        html = read_resume(
+            b"<html><body><h1>Nino Beridze</h1><p>nino@example.com Python Django developer</p></body></html>",
+            "cv.html",
+        )
+        self.assertIn("Nino Beridze", html.text)
+        self.assertIn("nino@example.com", html.text)
+        self.assertEqual(html.method, "html")
+        rtf = read_resume(
+            b"{\\rtf1\\ansi Nino Beridze\\par nino@example.com Python developer}",
+            "cv.rtf",
+        )
+        self.assertIn("Nino Beridze", rtf.text)
+        self.assertEqual(rtf.method, "rtf")
 
     def test_match_against_stored_job(self):
         skill, _created = Skill.objects.get_or_create(name="PostgreSQL")

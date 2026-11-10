@@ -25,9 +25,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from app.ats.exceptions import IncompleteResumeError, ResumeReaderError
+from app.ats.exceptions import ResumeReaderError
 from app.ats.persist import save_parsed_resume
-from app.ats.schemas.resume import ResumeData, format_validation_error, missing_fields
+from app.ats.schemas.resume import ResumeData, format_validation_error
 from app.ats.service import match_resume, parse_uploaded_resume
 from app.models import UserResume
 
@@ -90,9 +90,6 @@ class ResumeMatchView(_AtsView):
                 resume, source_text = parse_uploaded_resume(upload)
             elif request.data.get("resume"):
                 resume = ResumeData.model_validate(request.data.get("resume"))
-                gaps = missing_fields(resume)
-                if gaps:
-                    raise IncompleteResumeError(gaps)
                 source_text = ""
             else:
                 return Response(

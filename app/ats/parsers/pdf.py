@@ -69,7 +69,9 @@ def extract_pdf(data: bytes) -> tuple[str, str, int, list[str]]:
         ) from exc
 
     digital_text = clean_georgian_text("\n\n".join(chunk for chunk in chunks if chunk.strip()))
-    if _text_is_sufficient(digital_text, min(page_count, get_int_setting("ATS_MAX_PAGES", 8))):
+    empty_pages = sum(1 for chunk in chunks if not chunk.strip())
+    pages_read = min(page_count, get_int_setting("ATS_MAX_PAGES", 8))
+    if _text_is_sufficient(digital_text, pages_read) and empty_pages == 0:
         return digital_text, "digital", page_count, warnings
 
     try:
@@ -92,10 +94,13 @@ def extract_pdf(data: bytes) -> tuple[str, str, int, list[str]]:
 
     warnings.extend(ocr_warnings)
     ocr_clean = clean_georgian_text(ocr_text)
-    if meaningful_count(ocr_clean) >= meaningful_count(digital_text) and ocr_clean.strip():
-        return ocr_clean, "ocr", page_count, warnings
+    if meaningful_count(ocr_clean) > meaningful_count(digital_text) and ocr_clean.strip():
+        method = "digital+ocr" if digital_text.strip() else "ocr"
+        if digital_text.strip():
+            warnings.append("ocr_recovered_pages")
+        return ocr_clean, method, page_count, list(dict.fromkeys(warnings))
     if digital_text.strip():
-        return digital_text, "digital", page_count, warnings
+        return digital_text, "digital", page_count, list(dict.fromkeys(warnings))
     raise EmptyResumeError(
         "No text could be read from this PDF. If it is a scan, check that the pages are not blank."
     )
@@ -105,13 +110,31 @@ def _read_page(page, index: int, warnings: list[str]) -> str:
     try:
         words = page.extract_words(keep_blank_chars=False, use_text_flow=False) or []
         width = float(page.width or 0)
-        if words:
-            return words_to_text(words, width)
-        return page.extract_text() or ""
+        text = words_to_text(words, width) if words else (page.extract_text() or "")
+        links = _page_links(page)
+        if links:
+            text = "\n".join([text, *links]).strip()
+        return text
     except Exception:
         logger.warning("Skipping unreadable PDF page %s", index + 1, exc_info=True)
         warnings.append(f"unreadable_page_{index + 1}")
         return ""
+
+
+def _page_links(page) -> list[str]:
+    found = []
+    try:
+        links = list(getattr(page, "hyperlinks", None) or [])
+    except Exception:
+        logger.warning("PDF hyperlink read failed", exc_info=True)
+        return []
+    for item in links:
+        if not isinstance(item, dict):
+            continue
+        uri = str(item.get("uri") or item.get("url") or "").strip()
+        if uri and uri not in found:
+            found.append(uri)
+    return found
 
 
 def _text_is_sufficient(text: str, page_count: int) -> bool:

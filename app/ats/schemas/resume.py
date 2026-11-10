@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -72,13 +73,84 @@ def _mark_ongoing(data):
     return data
 
 
+_MONTHS = {
+    "jan": "01",
+    "january": "01",
+    "feb": "02",
+    "february": "02",
+    "mar": "03",
+    "march": "03",
+    "apr": "04",
+    "april": "04",
+    "may": "05",
+    "jun": "06",
+    "june": "06",
+    "jul": "07",
+    "july": "07",
+    "aug": "08",
+    "august": "08",
+    "sep": "09",
+    "sept": "09",
+    "september": "09",
+    "oct": "10",
+    "october": "10",
+    "nov": "11",
+    "november": "11",
+    "dec": "12",
+    "december": "12",
+}
+
+
 def _clean_date(value):
     if value is None:
         return None
-    text = str(value).strip()
+    text = str(value).strip().replace("—", "-").replace("–", "-").replace(".", "/")
     if text.lower() in _EMPTY_DATES or text.lower() in _ONGOING_MARKERS:
         return None
-    return text
+    text = _fix_ocr_date(text)
+    normalized = _normalize_date(text)
+    return normalized or text
+
+
+def _fix_ocr_date(text: str) -> str:
+    """Turn obvious OCR digit mistakes inside a date into digits."""
+    if not re.search(r"\d", text):
+        return text
+    chars: list[str] = []
+    for char in text:
+        previous = chars[-1] if chars else ""
+        if char in "Oo" and previous.isdigit():
+            chars.append("0")
+        elif char in "Il|" and previous.isdigit():
+            chars.append("1")
+        else:
+            chars.append(char)
+    return "".join(chars)
+
+
+def _normalize_date(text: str) -> str | None:
+    month_name = re.fullmatch(r"([A-Za-z]{3,9})\s+(\d{4})", text)
+    if month_name and month_name.group(1).lower() in _MONTHS:
+        return f"{month_name.group(2)}-{_MONTHS[month_name.group(1).lower()]}"
+    month_first = re.fullmatch(r"(\d{1,2})/(\d{4})", text)
+    if month_first:
+        month = int(month_first.group(1))
+        if 1 <= month <= 12:
+            return f"{month_first.group(2)}-{month:02d}"
+    year_first = re.fullmatch(r"(\d{4})/(\d{1,2})", text)
+    if year_first:
+        month = int(year_first.group(2))
+        if 1 <= month <= 12:
+            return f"{year_first.group(1)}-{month:02d}"
+    year_only = re.fullmatch(r"(?:19|20)\d{2}", text)
+    if year_only:
+        return text
+    year_month = re.fullmatch(r"((?:19|20)\d{2})-(\d{1,2})(?:-\d{1,2})?", text)
+    if year_month:
+        month = int(year_month.group(2))
+        if 1 <= month <= 12:
+            return f"{year_month.group(1)}-{month:02d}"
+    return None
 
 
 def _clean_bool(value):
@@ -96,6 +168,7 @@ class WorkExperienceItem(BaseModel):
     start_date: str | None = None
     end_date: str | None = None
     is_current: bool = False
+    employment_type: str = ""
     description: BilingualText = Field(default_factory=BilingualText)
 
     @model_validator(mode="before")
@@ -112,6 +185,13 @@ class WorkExperienceItem(BaseModel):
     @classmethod
     def _bool(cls, value):
         return _clean_bool(value)
+
+    @field_validator("employment_type", mode="before")
+    @classmethod
+    def _employment_type(cls, value):
+        if value is None:
+            return ""
+        return str(value).strip()
 
 
 class EducationItem(BaseModel):
@@ -140,6 +220,13 @@ class EducationItem(BaseModel):
         return _clean_bool(value)
 
 
+class OtherSection(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    title: BilingualText = Field(default_factory=BilingualText)
+    content: BilingualText = Field(default_factory=BilingualText)
+
+
 class ResumeData(BaseModel):
     """Structured resume. Bilingual fields keep Latin and Mkhedruli side by side."""
 
@@ -156,11 +243,16 @@ class ResumeData(BaseModel):
     work_experience: list[WorkExperienceItem] = Field(default_factory=list)
     education: list[EducationItem] = Field(default_factory=list)
     certifications: list[BilingualText] = Field(default_factory=list)
+    projects: list[BilingualText] = Field(default_factory=list)
+    awards: list[BilingualText] = Field(default_factory=list)
+    links: list[str] = Field(default_factory=list)
+    other_sections: list[OtherSection] = Field(default_factory=list)
     language: Literal["en", "ka", "mixed", "unknown"] = "unknown"
     extraction_method: Literal["llm", "heuristic"] = "heuristic"
     parser_method: str = ""
     source_filename: str = ""
     warnings: list[str] = Field(default_factory=list)
+    parsing_metadata: dict = Field(default_factory=dict)
 
     @field_validator("email", "phone", mode="before")
     @classmethod
@@ -211,7 +303,7 @@ class ResumeData(BaseModel):
                 items.append(item)
         return items
 
-    @field_validator("certifications", mode="before")
+    @field_validator("certifications", "projects", "awards", mode="before")
     @classmethod
     def _certifications(cls, value):
         if not value:
@@ -224,12 +316,42 @@ class ResumeData(BaseModel):
                 items.append(item)
         return items
 
+    @field_validator("links", mode="before")
+    @classmethod
+    def _links(cls, value):
+        if not value:
+            return []
+        links = []
+        for item in value:
+            text = str(item or "").strip().rstrip(".,);")
+            if text and text not in links:
+                links.append(text)
+        return links
+
+    @field_validator("other_sections", mode="before")
+    @classmethod
+    def _other_sections(cls, value):
+        if not value:
+            return []
+        items = []
+        for item in value:
+            if isinstance(item, str):
+                items.append({"content": _bilingual_dict_from_string(item)})
+            elif isinstance(item, dict) or isinstance(item, OtherSection):
+                items.append(item)
+        return items
+
     @field_validator("warnings", mode="before")
     @classmethod
     def _warnings(cls, value):
         if not value:
             return []
         return [str(item) for item in value if str(item).strip()]
+
+    @field_validator("parsing_metadata", mode="before")
+    @classmethod
+    def _metadata(cls, value):
+        return value if isinstance(value, dict) else {}
 
     def to_match_text(self) -> str:
         """Flat text used by keyword and TF-IDF scoring."""
@@ -260,8 +382,11 @@ class ResumeData(BaseModel):
                     school.field_of_study.combined(),
                 ]
             )
-        for cert in self.certifications:
+        for cert in [*self.certifications, *self.projects, *self.awards]:
             parts.append(cert.combined())
+        parts.extend(self.links)
+        for section in self.other_sections:
+            parts.extend([section.title.combined(), section.content.combined()])
         return "\n".join(part for part in parts if part and part.strip())
 
 
@@ -374,8 +499,11 @@ def fill_blank_translations(resume: ResumeData) -> ResumeData:
         school.field_of_study.en, school.field_of_study.ka = _copy_blank(
             school.field_of_study.en, school.field_of_study.ka
         )
-    for item in resume.certifications:
+    for item in [*resume.certifications, *resume.projects, *resume.awards]:
         item.en, item.ka = _copy_blank(item.en, item.ka)
+    for section in resume.other_sections:
+        section.title.en, section.title.ka = _copy_blank(section.title.en, section.title.ka)
+        section.content.en, section.content.ka = _copy_blank(section.content.en, section.content.ka)
     return resume
 
 

@@ -15,17 +15,19 @@ from app.ats.schemas.resume import ResumeData
 logger = logging.getLogger(__name__)
 
 _SYSTEM_PROMPT = """You extract structured resume data for an applicant tracking system.
-The resume may be English, Georgian (Mkhedruli), or a mix of both.
+The resume may be English, Georgian (Mkhedruli), or a mix of both, and the text may come from columns, tables, sidebars, headers, footers, or OCR.
 Return one JSON object and nothing else.
 Rules:
-- Copy facts only from the resume. Do not invent an email, phone, employer, school, date, or skill that the resume does not contain.
-- Every bilingual field must have both "en" and "ka". Put the original wording in its language and a faithful translation or standard Latin transliteration in the other one.
+- Copy facts only from the resume. Never invent an email, phone, employer, school, date, skill, link, or job.
+- Read every section even when the heading is unusual. Keep each job and each school as its own entry. Do not merge two jobs.
+- Put the original wording in en or ka, and a faithful translation in the other language when you can. If you cannot translate, leave that language empty. Do not drop the fact.
 - Tool names such as Python, Django, and SQL stay the same in both languages.
-- Georgian text in "ka" fields must be Mkhedruli Unicode, never Latin transliteration.
-- Include at least one skill, one language, one job, one education entry, and one certification when the resume contains them.
-- Fill title, company, location, and description in both languages for every job.
-- Fill school, degree, and field_of_study in both languages for every education entry.
-- Dates are "YYYY" or "YYYY-MM". Set is_current to true only when the resume says the role or study is still ongoing, and then set end_date to null.
+- Georgian text in "ka" fields must be Mkhedruli Unicode.
+- For each job, put responsibilities, achievements, metrics, and tools in description. Set employment_type only when the resume states it.
+- Dates are "YYYY" or "YYYY-MM". "Jan 2024", "01/2024", and "2024/01" all become "2024-01". Set is_current true and end_date null when the resume says the role or study is current, present, or now.
+- Put LinkedIn, GitHub, portfolio, Behance, Dribbble, and other URLs in links.
+- Put projects, awards, volunteer work, publications, and other uncommon sections in projects, awards, or other_sections. Do not discard them.
+- Leave lists empty when the resume does not contain that section.
 - language is "en", "ka", or "mixed".
 - extraction_method must be "llm".
 """
@@ -47,6 +49,7 @@ _SKELETON = {
             "start_date": None,
             "end_date": None,
             "is_current": False,
+            "employment_type": "",
             "description": {"en": "", "ka": ""},
         }
     ],
@@ -61,6 +64,10 @@ _SKELETON = {
         }
     ],
     "certifications": [{"en": "", "ka": ""}],
+    "projects": [{"en": "", "ka": ""}],
+    "awards": [{"en": "", "ka": ""}],
+    "links": [],
+    "other_sections": [{"title": {"en": "", "ka": ""}, "content": {"en": "", "ka": ""}}],
     "language": "unknown",
     "extraction_method": "llm",
 }
@@ -162,7 +169,7 @@ def _extract_chunk(
         )
     user_prompt = (
         f"{part}{repair}"
-        "Fill this JSON shape from the resume. Both en and ka are required whenever the fact exists.\n"
+        "Fill this JSON shape from the resume. Keep every fact you can read. Leave a field empty when the resume does not contain it.\n"
         f"{json.dumps(_SKELETON, ensure_ascii=False)}\n\n"
         f"RESUME:\n{text}"
     )

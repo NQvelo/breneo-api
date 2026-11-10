@@ -52,13 +52,18 @@ def extract_docx(data: bytes) -> tuple[str, list[str]]:
 
     body = "\n".join(body_lines)
     header_bits = _header_footer_lines(document)
+    links = [link for link in _hyperlinks(document) if link not in body]
     prefix = [line for line in header_bits if line and line not in body]
-    combined = clean_georgian_text("\n".join([*prefix, body]))
+    combined = clean_georgian_text("\n".join([*prefix, body, *links]))
     if meaningful_count(combined) < 20:
         raise EmptyResumeError(
             "The Word file has no readable resume text. It may be empty or image-only."
         )
-    warnings = ["header_included"] if prefix else []
+    warnings = []
+    if prefix:
+        warnings.append("header_included")
+    if links:
+        warnings.append("links_included")
     return combined, warnings
 
 
@@ -73,6 +78,22 @@ def _table_lines(table) -> list[str]:
         if cells:
             lines.append(" | ".join(cells))
     return lines
+
+
+def _hyperlinks(document) -> list[str]:
+    links = []
+    try:
+        rels = document.part.rels.values()
+    except Exception:
+        logger.warning("DOCX hyperlink read failed", exc_info=True)
+        return []
+    for rel in rels:
+        if "hyperlink" not in str(getattr(rel, "reltype", "")):
+            continue
+        target = str(getattr(rel, "target_ref", "") or "").strip()
+        if target and target not in links:
+            links.append(target)
+    return links
 
 
 def _header_footer_lines(document) -> list[str]:
