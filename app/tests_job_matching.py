@@ -282,6 +282,27 @@ class JobMatchEndpointTests(SnapshotTestBase):
         self.assertEqual(post.call_args.kwargs["json"]["limit"], 9)
 
     @mock.patch("app.job_matching.aggregator.requests.post")
+    def test_search_forwards_filters_and_returns_the_ranked_list(self, post):
+        payload = [job(9, 80), job(4, 40)]
+        post.return_value = fake_response(200, payload)
+        response = self.client.get(
+            "/api/me/job-matches/search/?query=react&title=python,sql&city=Tbilisi"
+            "&location_country=Georgia&work_mode=remote&job_seniority=mid&limit=50"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), payload)
+        body = post.call_args.kwargs["json"]
+        self.assertEqual(post.call_args.args[0], "http://aggregator.test/internal/job-matches/search")
+        self.assertEqual(body["query"], "react")
+        self.assertEqual(body["title"], ["python", "sql"])
+        self.assertEqual(body["city"], ["Tbilisi"])
+        self.assertEqual(body["locationCountry"], ["Georgia"])
+        self.assertEqual(body["workMode"], ["remote"])
+        self.assertEqual(body["jobSeniority"], ["mid"])
+        self.assertEqual(body["limit"], 50)
+        self.assertEqual(body["seniority"], "mid")
+
+    @mock.patch("app.job_matching.aggregator.requests.post")
     def test_validation(self, post):
         for query in ["", "?scope=Georgia", "?scope=all", "?scope=georgia&limit=0", "?scope=georgia&limit=301",
                       "?scope=georgia&limit=abc", "?scope=georgia&limit=-1", "?scope=georgia&limit=5.0"]:

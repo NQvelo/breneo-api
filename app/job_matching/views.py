@@ -9,13 +9,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .accounts import is_candidate
-from .aggregator import AggregatorError, fetch_job_match, fetch_job_matches
+from .aggregator import AggregatorError, fetch_job_match, fetch_job_match_search, fetch_job_matches
 from .snapshot import build_user_snapshot
 
 SCOPES = ("georgia", "worldwide")
 DEFAULT_LIMIT = 9
 MAX_LIMIT = 300
 REQUEST_TIMEOUT_SECONDS = 10
+SEARCH_TIMEOUT_SECONDS = 25
 _DIGITS = re.compile(r"^[0-9]+$")
 
 
@@ -23,9 +24,9 @@ def _unavailable():
     return Response({"error": "Job matches are temporarily unavailable."}, status=status.HTTP_502_BAD_GATEWAY)
 
 
-def _parse_limit(raw):
+def _parse_limit(raw, default=DEFAULT_LIMIT):
     if raw is None:
-        return DEFAULT_LIMIT
+        return default
     if not _DIGITS.match(raw):
         return None
     value = int(raw)
@@ -64,6 +65,44 @@ class MeJobMatchListView(_JobMatchView):
         snapshot = build_user_snapshot(request.user.pk)
         try:
             result = fetch_job_matches(snapshot, scope, limit, REQUEST_TIMEOUT_SECONDS)
+        except AggregatorError:
+            return _unavailable()
+        if result.status_code != 200 or not isinstance(result.data, list):
+            return _unavailable()
+        return Response(result.data)
+
+
+def _csv(raw):
+    if raw is None:
+        return []
+    return [part.strip() for part in str(raw).split(",") if part.strip()]
+
+
+class MeJobMatchSearchView(_JobMatchView):
+    """GET /api/me/job-matches/search/ — ranked matches for the current search. 0% is omitted."""
+
+    def get(self, request):
+        limit = _parse_limit(request.query_params.get("limit"), default=100)
+        if limit is None:
+            return Response(
+                {"error": f"limit must be an integer from 1 to {MAX_LIMIT}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        date_posted = (request.query_params.get("date_posted") or "all").strip().lower()
+        filters = {
+            "query": (request.query_params.get("query") or "").strip(),
+            "title": _csv(request.query_params.get("title")),
+            "city": _csv(request.query_params.get("city")),
+            "locationCountry": _csv(request.query_params.get("location_country")),
+            "workMode": _csv(request.query_params.get("work_mode")),
+            "jobSeniority": _csv(request.query_params.get("job_seniority")),
+            "roleCategory": _csv(request.query_params.get("role_category")),
+            "companyNames": _csv(request.query_params.get("company")),
+            "datePosted": date_posted or "all",
+        }
+        snapshot = build_user_snapshot(request.user.pk)
+        try:
+            result = fetch_job_match_search(snapshot, filters, limit, SEARCH_TIMEOUT_SECONDS)
         except AggregatorError:
             return _unavailable()
         if result.status_code != 200 or not isinstance(result.data, list):

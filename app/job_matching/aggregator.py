@@ -69,3 +69,8 @@ def fetch_job_matches(snapshot: dict, scope: str, limit: int, timeout: float) ->
 def fetch_job_match(snapshot: dict, job_id: int, timeout: float) -> AggregatorResponse:
     body = {**snapshot, "jobId": int(job_id)}
     return _post("/internal/job-matches/one", body, timeout)
+
+
+def fetch_job_match_search(snapshot: dict, filters: dict, limit: int, timeout: float) -> AggregatorResponse:
+    body = {**snapshot, **filters, "limit": int(limit)}
+    return _post("/internal/job-matches/search", body, timeout)
