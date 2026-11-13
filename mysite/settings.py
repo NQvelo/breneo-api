@@ -270,6 +270,25 @@ BOG_CALLBACK_SECRET_PUBLIC_KEY = os.getenv("BOG_CALLBACK_SECRET_PUBLIC_KEY")
 # ----------- Notifications (BFF internal + SPA user endpoints) -----------
 NOTIFICATIONS_INTERNAL_KEY = os.environ.get("NOTIFICATIONS_INTERNAL_KEY", "")
 
+# ----------- Job matching (scores come from the job aggregator) -----------
+AGGREGATOR_BASE_URL = (os.getenv("AGGREGATOR_BASE_URL") or "").strip().rstrip("/")
+INTERNAL_API_KEY = (os.getenv("INTERNAL_API_KEY") or "").strip()
+JOB_MATCH_EMAIL_LIMIT = _env_int("JOB_MATCH_EMAIL_LIMIT", 5)
+if not 1 <= JOB_MATCH_EMAIL_LIMIT <= 300:
+    raise ValueError("JOB_MATCH_EMAIL_LIMIT must be an integer from 1 to 300.")
+# {id} is the aggregator's job id.
+JOB_MATCH_JOB_URL = os.getenv("JOB_MATCH_JOB_URL", "https://app.breneo.ge/jobs/{id}")
+
+# Snapshot cache lives in the database so every worker and both of a user's devices share one entry.
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+    "job_match_snapshots": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "job_match_snapshot_cache",
+        "TIMEOUT": 300,
+    },
+}
+
 # ----------- Debug: log all errors with traceback to console -----------
 import sys
 LOGGING = {

@@ -84,6 +84,7 @@ from .atom_views import (
     ProfessionNextAtomView,
 )
 from .ats.views import MyResumeView, ResumeMatchView, ResumeParseView
+from .job_matching.views import MeJobMatchDetailView, MeJobMatchListView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -223,6 +224,9 @@ urlpatterns = [
         MeJobNotificationView.as_view(),
         name="me-job-notifications",
     ),
+    # ----------- Job matches (scored by the job aggregator) -----------
+    path("api/me/job-matches/", MeJobMatchListView.as_view(), name="me-job-matches"),
+    path("api/me/job-matches/<int:job_id>/", MeJobMatchDetailView.as_view(), name="me-job-match-detail"),
     path(
         "api/internal/notifications/",
         InternalNotificationCreateView.as_view(),

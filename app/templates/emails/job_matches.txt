@@ -1,0 +1,17 @@
+{% autoescape off %}Your Top Job Matches
+
+Dear {{ first_name|default:"User" }},
+
+These jobs match your profile today:
+{% for job in jobs %}
+{{ job.title }}
+{{ job.company }}
+{{ job.location }}
+{{ job.match_percent }}% match
+{{ job.url }}
+{% endfor %}
+Best regards,
+The Breneo Team
+
+This is an automated message. Please do not reply to this email.
+{% endautoescape %}

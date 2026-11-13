@@ -1,0 +1,21 @@
+{% extends "emails/_base.html" %}
+{% block title %}Your Job Matches{% endblock %}
+{% block preheader %}Jobs that match your Breneo profile{% endblock %}
+{% block heading %}Your Top Job Matches{% endblock %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Dear {{ first_name|default:"User" }},</p>
+<p style="margin:0 0 16px 0;">These jobs match your profile today:</p>
+{% for job in jobs %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px 0;">
+    <tr>
+        <td style="background-color:#ffffff; border:1px solid #e3e3e3; border-radius:8px; padding:16px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.5; color:#333333;">
+            <p style="margin:0 0 4px 0; font-size:16px; font-weight:bold;"><a href="{{ job.url }}" style="color:#222222; text-decoration:none;">{{ job.title }}</a></p>
+            <p style="margin:0 0 4px 0;">{{ job.company }}</p>
+            <p style="margin:0 0 8px 0; color:#666666;">{{ job.location }}</p>
+            <p style="margin:0 0 8px 0; font-weight:bold; color:#4CAF50;">{{ job.match_percent }}% match</p>
+            <a href="{{ job.url }}" style="color:#2196F3;">View job</a>
+        </td>
+    </tr>
+</table>
+{% endfor %}
+{% endblock %}

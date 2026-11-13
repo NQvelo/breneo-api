@@ -783,6 +783,28 @@ class JobNotification(models.Model):
         return f"{self.user_id} notified for job {self.job_id}"
 
 
+class JobMatchEmail(models.Model):
+    """At most one daily job-match email per user per Asia/Tbilisi date."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="job_match_emails",
+    )
+    sent_on = models.DateField()
+    # False while the provider has not yet accepted the message.
+    delivered = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "sent_on"], name="unique_job_match_email_per_day"),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} job-match email on {self.sent_on}"
+
+
 class Atom(models.Model):
     """A single ~3-minute micro-lesson made of story-like cards ending in a quiz."""
 

@@ -40,6 +40,23 @@ DJANGO_DEBUG=0
 DATABASE_URL=postgresql://... (usually set automatically when you link PostgreSQL)
 ```
 
+### 4. Job matching (job aggregator)
+```
+AGGREGATOR_BASE_URL=https://aggregator.example.com
+INTERNAL_API_KEY=same-value-as-the-aggregator
+JOB_MATCH_EMAIL_LIMIT=5
+JOB_MATCH_JOB_URL=https://app.breneo.ge/jobs/{id}
+```
+
+- `AGGREGATOR_BASE_URL` - no trailing slash and no `/api` suffix.
+- `INTERNAL_API_KEY` - must equal the aggregator's `INTERNAL_API_KEY`. Never exposed to the browser.
+- `JOB_MATCH_EMAIL_LIMIT` - jobs per daily email, 1-300 (default 5).
+- `JOB_MATCH_JOB_URL` - job page link in the email; `{id}` is the aggregator job id.
+
+The daily email runs from a second Railway service using the same repo and variables, with start command
+`python manage.py run_job_match_scheduler`. It sends at 15:00 Asia/Tbilisi using its own clock, so do not
+configure a Railway cron for it (Railway cron schedules are UTC).
+
 ---
 
 ## Optional but Recommended
